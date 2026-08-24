@@ -4,6 +4,8 @@
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
+\usepackage{flushend}
+\usepackage{caption}
 \usepackage{tabularx}
 \usepackage{multirow}
 \usepackage{xcolor}
@@ -23,10 +25,17 @@
 \newcommand{\claimref}[1]{\hyperlink{claim:#1}{\textsuperscript{\textsf{#1}}}}
 \hypersetup{colorlinks=true,allcolors=black}
 \setlist[itemize]{leftmargin=*,nosep}
+\captionsetup{justification=raggedright,singlelinecheck=false}
+\raggedbottom
+\setlength{\textfloatsep}{12pt plus 1pt minus 2pt}
+\setlength{\floatsep}{10pt plus 1pt minus 2pt}
+\setlength{\intextsep}{10pt plus 1pt minus 2pt}
+\setlength{\dbltextfloatsep}{12pt plus 1pt minus 2pt}
+\setlength{\dblfloatsep}{10pt plus 1pt minus 2pt}
 
 \begin{document}
 
-\title{Memory-Sovereign Inference: Output-Exact Execution Beyond Full Residency}
+\title{Memory-Sovereign Inference:\\[-0.15em]Output-Exact Execution Beyond Full Residency}
 \author{Lukas Stepanek\\\texttt{luki.step@proton.me}}
 \date{Technical report}
 \maketitle
@@ -848,7 +857,8 @@ result\claimref{C8}.
 
 \begin{table}[t]
   \centering
-  \scriptsize
+  \footnotesize
+  \renewcommand{\arraystretch}{1.08}
   \caption{Principal C1 certificate instance.  C3 is a separate later-build
   transition record and is not a conjunct of C1.}
   \label{tab:c1certificate}
@@ -978,7 +988,8 @@ returns all windows free.
 
 \begin{table}[t]
   \centering
-  \scriptsize
+  \footnotesize
+  \renewcommand{\arraystretch}{1.08}
   \caption{All six matched complete-wall pairs and their actual D/F execution
   order.  Ratios repeat one fixed workload/system identity; they do not sample
   prompts or hardware.}
@@ -1337,7 +1348,7 @@ packaged summary where replay is applicable.  Each entry contains the paper
 statement, immutable result path, full SHA-256 digest, JSON pointers or a text
 locator, and both commands.  Table~\ref{tab:claimledger} abbreviates the digests
 for print; the machine-readable ledger preserves all 64 hexadecimal digits.
-Artifact release \texttt{v0.1.1}: \url{https://github.com/gustavgauge/memory-sovereign-inference-artifact/releases/tag/v0.1.1}.
+Artifact release \texttt{v0.1.2}: \url{https://github.com/gustavgauge/memory-sovereign-inference-artifact/releases/tag/v0.1.2}.
 
 \begin{table*}[t]
   \centering
