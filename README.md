@@ -113,7 +113,7 @@ resource authorities, and recorded execution identities.
 ## Citation
 
 Citation metadata is provided in [`CITATION.cff`](CITATION.cff). The immutable
-artifact release is [`v0.1.0`](https://github.com/gustavgauge/memory-sovereign-inference-artifact/releases/tag/v0.1.0).
+artifact release is [`v0.1.1`](https://github.com/gustavgauge/memory-sovereign-inference-artifact/releases/tag/v0.1.1).
 
 ## Licensing
 

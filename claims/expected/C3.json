@@ -4,5 +4,7 @@
   {"json_pointer":"/population/fatal_cells","op":"eq","value":7},
   {"json_pointer":"/population/recoverable_cells","op":"eq","value":5},
   {"json_pointer":"/population/control_cells","op":"eq","value":2},
-  {"source":"evidence/replay/C3/cell-certificates.json","json_pointer":"/cells","op":"len","value":14}
+  {"source":"evidence/replay/C3/cell-certificates.json","json_pointer":"/cells","op":"len","value":14},
+  {"source":"implementation/frozen/C3-qwen/configs/qwen3-next-integrated-fault-campaign.json","json_pointer":"/implementation/binary_sha256","op":"eq","value":"5083ccd5b1fafc2468c1211401244366f0347e3671d3e3325ad602c9f56296ce"},
+  {"source":"runtime/qwen3-next/upstream.json","json_pointer":"/evidence_binary_sha256/C3","op":"eq","value":"5083ccd5b1fafc2468c1211401244366f0347e3671d3e3325ad602c9f56296ce"}
 ]}

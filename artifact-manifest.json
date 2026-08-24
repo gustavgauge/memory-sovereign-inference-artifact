@@ -13,7 +13,7 @@
     {
       "bytes": 661,
       "path": "CITATION.cff",
-      "sha256": "b120c5af1d606d241e6e330898ce9f288cd16c8bd02cff8e4a1c2aa24710ea24"
+      "sha256": "5bea0e5ca678d2fa79bfed7a3fbd59393e4907c5132c407ae1282261384723c4"
     },
     {
       "bytes": 11358,
@@ -33,17 +33,17 @@
     {
       "bytes": 6038,
       "path": "README.md",
-      "sha256": "e15176f82dcc78427fe76459ef1f629d5791f73a688fb8845a79fd9227ff3f18"
+      "sha256": "2ff5ae0d9f60f86baafa1afab6f4e85a8ee1ef192fa3409ab7a43f5f422b9cd9"
     },
     {
-      "bytes": 35037,
+      "bytes": 35730,
       "path": "artifact",
-      "sha256": "a83616f1df0a5fe714ebcba6e3d9fb14ef33ae564cf9078093022aa7e4828068"
+      "sha256": "54eca3da2ebe1133d69a3506adc3548a9f588a8b3d29911b643838aad009f8a3"
     },
     {
-      "bytes": 10370,
+      "bytes": 11014,
       "path": "claims/claim-ledger.json",
-      "sha256": "34176a06784558f609d352aa7d889f01b6a3346f4abb86266071b1bf20f86378"
+      "sha256": "1749a67ca39581901dbdcb8e52042fe022223cc48b42d5138c1515853457bec5"
     },
     {
       "bytes": 8565,
@@ -66,14 +66,14 @@
       "sha256": "659ac4ace61cb0773aa06f58607706af10cd218119654adba5e9989cf5826450"
     },
     {
-      "bytes": 2209,
+      "bytes": 2413,
       "path": "claims/expected/C2.json",
-      "sha256": "8759fe806996775026d67c222bb0f1273af56c85e79a72e5c90289f2971309e4"
+      "sha256": "bad2e36f0f39b28aee6faa55f3d57fb501711ae8968775241870ea12d0028c8e"
     },
     {
-      "bytes": 482,
+      "bytes": 888,
       "path": "claims/expected/C3.json",
-      "sha256": "ffeb1819c3a97e6fec7eca51713b066f1b6e5f300d882d5b5235bfba803cf6cd"
+      "sha256": "aaee8d5a819a2c1695e1259be04aca39e7483dc787b04ca7ae87d9d353e56db8"
     },
     {
       "bytes": 701,
@@ -128,7 +128,7 @@
     {
       "bytes": 1677,
       "path": "claims/records/C2.json",
-      "sha256": "29ebe2b94cf3ed053f4acd63122e08ee3d8789c99d4b80ef002f760d36ef2da6"
+      "sha256": "1fad89aa4103c69912aef4eddbdadf7e48aceab2898d98e2bf3a6e4be35bd3cb"
     },
     {
       "bytes": 1047,
@@ -198,7 +198,7 @@
     {
       "bytes": 2925,
       "path": "evidence/replay/C2/campaign-evaluation.json",
-      "sha256": "60dbdf28d7da5f46a53b1331b339b5c66e0b1017a8eaedc37dbb20d29580c492"
+      "sha256": "a8386dedb1d51a2922de4e8faeb07ad5d855dbb37c7bf5244c056c162f4d408d"
     },
     {
       "bytes": 12335,
@@ -438,12 +438,12 @@
     {
       "bytes": 78793,
       "path": "paper/main.tex",
-      "sha256": "e8d8954b473389f43841c7b0397552ac5110b709438c35aeb118ead50a460c8a"
+      "sha256": "4da938204271b160b3f7f058514e8d5c9f4b910759d10af2c48f46bee89f170b"
     },
     {
-      "bytes": 154287,
+      "bytes": 154293,
       "path": "paper/preprint.pdf",
-      "sha256": "6eb51d835e0658fdddd4053634fb6a0e451aea26f04d8bbd63bdc8d8e66ff2cc"
+      "sha256": "bceb7f1634369335432c547153c2140fcab8072ecc10e23262e93fbdd5933d7f"
     },
     {
       "bytes": 8150,
@@ -473,7 +473,7 @@
     {
       "bytes": 857,
       "path": "runtime/qwen3-next/upstream.json",
-      "sha256": "72b3d0593af60bf3041d7a9549962b5900b0217c6c9498021a3f294717e442a7"
+      "sha256": "e557cdedf2d6180ed49c3ae7776f4cc97753acd41cef6640d848aa3b157ef927"
     },
     {
       "bytes": 961,

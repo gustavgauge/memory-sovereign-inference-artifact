@@ -1,6 +1,6 @@
 {"claim":"C2","assertions":[
   {"json_pointer":"/workload/pairs","op":"eq","value":6},
-  {"json_pointer":"/workload/execution_order","op":"eq","value":["P","D1","F1","D2","F2","D3","F3","D4","F4","D5","F5","D6","F6"]},
+  {"json_pointer":"/workload/execution_order","op":"eq","value":["P","D1","F1","D2","F2","F3","D3","F4","D4","D5","F5","F6","D6"]},
   {"json_pointer":"/admission/P_resource_admissible","op":"eq","value":false},
   {"json_pointer":"/admission/P_complete_cgroup_peak_bytes","op":"eq","value":11811160064},
   {"json_pointer":"/admission/P_memory_max_events","op":"eq","value":33481},
@@ -18,5 +18,6 @@
   {"json_pointer":"/lifecycle/F_dynamic_direct_allocations","op":"eq","value":0},
   {"json_pointer":"/lifecycle/F_free_windows_at_every_close","op":"eq","value":8},
   {"source":"evidence/replay/C2/campaign-evaluation.json","json_pointer":"/derived/paired_estimands/decode_physical_source_bytes_per_output/D_values","op":"eq","value":[97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378]},
-  {"source":"evidence/replay/C2/campaign-evaluation.json","json_pointer":"/derived/paired_estimands/decode_physical_source_bytes_per_output/F_values","op":"eq","value":[97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378]}
+  {"source":"evidence/replay/C2/campaign-evaluation.json","json_pointer":"/derived/paired_estimands/decode_physical_source_bytes_per_output/F_values","op":"eq","value":[97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378]},
+  {"source":"implementation/frozen/C2/configs/qwen3-next-matched-control-churn.json","json_pointer":"/df_relative_orders","op":"eq","value":[["D","F"],["D","F"],["F","D"],["F","D"],["D","F"],["F","D"]]}
 ]}

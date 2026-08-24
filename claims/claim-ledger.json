@@ -3,8 +3,8 @@
   "artifact": "memory_sovereign_inference_claim_ledger",
   "evidence_cutoff": "2026-08-21",
   "repository_url": "https://github.com/gustavgauge/memory-sovereign-inference-artifact",
-  "release_tag": "v0.1.0",
-  "release_url": "https://github.com/gustavgauge/memory-sovereign-inference-artifact/releases/tag/v0.1.0",
+  "release_tag": "v0.1.1",
+  "release_url": "https://github.com/gustavgauge/memory-sovereign-inference-artifact/releases/tag/v0.1.1",
   "scope": "Each entry binds one paper claim to a publication-facing record, content digest, machine-readable assertions, and an offline replay command.",
   "query_template": "./artifact verify --claim CLAIM_ID",
   "replay_template": "./artifact replay --claim CLAIM_ID",
@@ -34,9 +34,10 @@
     "C2": {
       "headline": "Six-pair complete asynchronous-component comparison",
       "paper_claim": "Across six fixed-identity D/F pairs, the complete eight-window asynchronous component has geometric F/D wall ratio 0.322913 with paired-log 95% interval [0.320090, 0.325762], or 3.10x reciprocal, at identical physical source bytes per output.",
-      "source": {"path": "claims/records/C2.json", "sha256": "29ebe2b94cf3ed053f4acd63122e08ee3d8789c99d4b80ef002f760d36ef2da6"},
+      "source": {"path": "claims/records/C2.json", "sha256": "1fad89aa4103c69912aef4eddbdadf7e48aceab2898d98e2bf3a6e4be35bd3cb"},
       "supporting_sources": [
-        {"path": "evidence/replay/C2/campaign-evaluation.json", "sha256": "60dbdf28d7da5f46a53b1331b339b5c66e0b1017a8eaedc37dbb20d29580c492", "json_pointers": ["/derived/paired_estimands/complete_request_wall_seconds/D_values", "/derived/paired_estimands/complete_request_wall_seconds/F_values"]}
+        {"path": "evidence/replay/C2/campaign-evaluation.json", "sha256": "a8386dedb1d51a2922de4e8faeb07ad5d855dbb37c7bf5244c056c162f4d408d", "json_pointers": ["/execution_order", "/derived/paired_estimands/complete_request_wall_seconds/D_values", "/derived/paired_estimands/complete_request_wall_seconds/F_values"]},
+        {"path": "implementation/frozen/C2/configs/qwen3-next-matched-control-churn.json", "sha256": "d04a58d2880f2fa30535c7484c4d65c3b99e59afeaaf37ea80af67aa82503e2f", "json_pointers": ["/df_relative_orders"]}
       ],
       "expected_assertions": "claims/expected/C2.json",
       "capsule_command": "./artifact verify --claim C2",
@@ -48,7 +49,9 @@
       "paper_claim": "All fourteen prespecified Qwen3-Next and Gemma control/fault cells satisfy their validators; seven fatal cells publish no accepted output and five recoverable cells remain control-exact and close.",
       "source": {"path": "claims/records/C3.json", "sha256": "c2ca7498e92ca657cbff1b6fe9b45a6ff4bccc20c669b0a41158506fa0d3b1c9"},
       "supporting_sources": [
-        {"path": "evidence/replay/C3/cell-certificates.json", "sha256": "bb8335f8ea7fc5f1e0780ee9ed60d5afbcbd6fe3be753ce8328f03642442ebe6", "json_pointers": ["/cells"]}
+        {"path": "evidence/replay/C3/cell-certificates.json", "sha256": "bb8335f8ea7fc5f1e0780ee9ed60d5afbcbd6fe3be753ce8328f03642442ebe6", "json_pointers": ["/cells"]},
+        {"path": "implementation/frozen/C3-qwen/configs/qwen3-next-integrated-fault-campaign.json", "sha256": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276", "json_pointers": ["/implementation/binary_sha256"]},
+        {"path": "runtime/qwen3-next/upstream.json", "sha256": "e557cdedf2d6180ed49c3ae7776f4cc97753acd41cef6640d848aa3b157ef927", "json_pointers": ["/evidence_binary_sha256/C3"]}
       ],
       "expected_assertions": "claims/expected/C3.json",
       "capsule_command": "./artifact verify --claim C3",

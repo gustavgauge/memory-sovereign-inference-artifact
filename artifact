@@ -325,8 +325,14 @@ def replay_c1() -> dict[str, Any]:
 def replay_c2() -> dict[str, Any]:
     record = load_json(ROOT / "claims/records/C2.json")
     raw = load_json(ROOT / "evidence/replay/C2/campaign-evaluation.json")
-    if raw["execution_order"] != record["workload"]["execution_order"]:
-        raise ArtifactError("C2: execution order differs between record and replay operands")
+    contract = load_json(ROOT / "implementation/frozen/C2/configs/qwen3-next-matched-control-churn.json")
+    contract_order = ["P"] + [
+        f"{arm}{block}"
+        for block, pair in enumerate(contract["df_relative_orders"], start=1)
+        for arm in pair
+    ]
+    if raw["execution_order"] != contract_order or record["workload"]["execution_order"] != contract_order:
+        raise ArtifactError("C2: execution order differs from the frozen preordering")
     if raw["arm_definitions"] != record["arms"]:
         raise ArtifactError("C2: arm definitions differ between record and replay operands")
     estimand = raw["derived"]["paired_estimands"]["complete_request_wall_seconds"]
@@ -388,6 +394,10 @@ def replay_c2() -> dict[str, Any]:
 
 
 def replay_c3() -> dict[str, Any]:
+    qwen_contract = load_json(ROOT / "implementation/frozen/C3-qwen/configs/qwen3-next-integrated-fault-campaign.json")
+    qwen_runtime = load_json(ROOT / "runtime/qwen3-next/upstream.json")
+    if qwen_runtime["evidence_binary_sha256"]["C3"] != qwen_contract["implementation"]["binary_sha256"]:
+        raise ArtifactError("C3: Qwen evidence-binary identity differs from the frozen contract")
     certificates = load_json(ROOT / "evidence/replay/C3/cell-certificates.json")["cells"]
     empty_sha256 = hashlib.sha256(b"").hexdigest()
     required_common = ("real_consumer", "workload_shape", "zero_cache", "resource_predicates")
