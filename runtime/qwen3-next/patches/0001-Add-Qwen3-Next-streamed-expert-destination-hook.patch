@@ -1,0 +1,172 @@
+From 7206605099424f7ad7ca78c2783a60ec60f810f4 Mon Sep 17 00:00:00 2001
+From: Lukas Stepanek <luki.step@proton.me>
+Date: Wed, 19 Aug 2026 13:43:48 +0200
+Subject: [PATCH] Add Qwen3-Next streamed expert destination hook
+
+---
+ src/llama-model-loader.cpp | 16 +++++++++
+ src/llama-model-loader.h   |  3 ++
+ src/llama-model.cpp        | 69 ++++++++++++++++++++++++++++++++++++++
+ src/llama.cpp              | 10 +++++-
+ 4 files changed, 97 insertions(+), 1 deletion(-)
+
+diff --git a/src/llama-model-loader.cpp b/src/llama-model-loader.cpp
+index 9b22cb05f..1acfa1519 100644
+--- a/src/llama-model-loader.cpp
++++ b/src/llama-model-loader.cpp
+@@ -18,6 +18,17 @@ static const size_t kiB = 1024;
+ static const size_t MiB = 1024*kiB;
+ static const size_t GiB = 1024*MiB;
+ 
++bool llama_tensor_is_streamed_qwen3next_expert(const char * name) {
++    int layer = -1;
++    char suffix[128] = {};
++    if (sscanf(name, "blk.%d.%127s", &layer, suffix) != 2 || layer < 0) {
++        return false;
++    }
++    return strcmp(suffix, "ffn_gate_exps.weight") == 0 ||
++           strcmp(suffix, "ffn_up_exps.weight") == 0 ||
++           strcmp(suffix, "ffn_down_exps.weight") == 0;
++}
++
+ const char * llama_file_version_name(llama_fver version) {
+     switch (version) {
+         case GGUF_FILE_VERSION_V1: return "GGUF V1 (support until nov 2023)";
+@@ -1545,6 +1556,11 @@ bool llama_model_loader::load_all_data(
+             continue;
+         }
+ 
++        if (stream_qwen3next_experts && llama_tensor_is_streamed_qwen3next_expert(ggml_get_name(cur))) {
++            size_done += ggml_nbytes(cur);
++            continue;
++        }
++
+         if (progress_callback) {
+             if (!progress_callback((float) size_done / size_data, progress_callback_user_data)) {
+                 return false;
+diff --git a/src/llama-model-loader.h b/src/llama-model-loader.h
+index e9fe3592d..f6f79a8c1 100644
+--- a/src/llama-model-loader.h
++++ b/src/llama-model-loader.h
+@@ -81,6 +81,7 @@ struct llama_model_loader {
+     bool check_tensors;
+     bool no_alloc;
+     bool load_mtp;
++    bool stream_qwen3next_experts = false;
+ 
+     llama_files files;
+     llama_ftype ftype;
+@@ -212,3 +213,5 @@ struct llama_model_loader {
+ 
+     void print_info() const;
+ };
++
++bool llama_tensor_is_streamed_qwen3next_expert(const char * name);
+diff --git a/src/llama-model.cpp b/src/llama-model.cpp
+index 0d74a2135..d9331d6f2 100644
+--- a/src/llama-model.cpp
++++ b/src/llama-model.cpp
+@@ -1631,6 +1631,75 @@ bool llama_model_base::load_tensors(llama_model_loader & ml) {
+                     t->buffer = buf; // set dummy buffer for weights so that the backend scheduler won't try to allocate them
+                 }
+             } else {
++                if (ml.stream_qwen3next_experts) {
++                    struct streamed_layout {
++                        size_t gate_bytes = 0;
++                        size_t up_bytes = 0;
++                        size_t down_bytes = 0;
++                        size_t gate_offset = 0;
++                        size_t up_offset = 0;
++                        size_t down_offset = 0;
++                        std::vector<ggml_tensor *> tensors;
++                    } layout;
++                    const auto has_suffix = [](const std::string & value, const char * suffix) {
++                        const size_t suffix_size = strlen(suffix);
++                        return value.size() >= suffix_size &&
++                               value.compare(value.size() - suffix_size, suffix_size, suffix) == 0;
++                    };
++                    for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
++                        if (!llama_tensor_is_streamed_qwen3next_expert(ggml_get_name(t))) {
++                            continue;
++                        }
++                        layout.tensors.push_back(t);
++                        const std::string name = ggml_get_name(t);
++                        const size_t alloc_size = ggml_backend_buft_get_alloc_size(buft, t);
++                        if (has_suffix(name, "ffn_gate_exps.weight")) {
++                            layout.gate_bytes = std::max(layout.gate_bytes, alloc_size);
++                        } else if (has_suffix(name, "ffn_up_exps.weight")) {
++                            layout.up_bytes = std::max(layout.up_bytes, alloc_size);
++                        } else if (has_suffix(name, "ffn_down_exps.weight")) {
++                            layout.down_bytes = std::max(layout.down_bytes, alloc_size);
++                        }
++                    }
++                    if (!layout.tensors.empty()) {
++                        ggml_backend_dev_t stream_dev = ggml_backend_buft_get_device(buft);
++                        if (stream_dev == nullptr ||
++                            ggml_backend_dev_type(stream_dev) != GGML_BACKEND_DEVICE_TYPE_GPU ||
++                            buft != ggml_backend_dev_buffer_type(stream_dev)) {
++                            throw std::runtime_error("streamed Qwen3-Next experts require the default GPU buffer type");
++                        }
++                        if (layout.gate_bytes == 0 || layout.up_bytes == 0 || layout.down_bytes == 0) {
++                            throw std::runtime_error("streamed Qwen3-Next expert component set is incomplete");
++                        }
++                        const size_t alignment = ggml_backend_buft_get_alignment(buft);
++                        layout.gate_offset = 0;
++                        layout.up_offset = GGML_PAD(layout.gate_bytes, alignment);
++                        layout.down_offset = GGML_PAD(layout.up_offset + layout.up_bytes, alignment);
++                        const size_t slot_bytes = GGML_PAD(layout.down_offset + layout.down_bytes, alignment);
++                        ggml_backend_buffer_t stream_buf = ggml_backend_buft_alloc_buffer(buft, slot_bytes);
++                        if (stream_buf == nullptr) {
++                            throw std::runtime_error("unable to allocate shared Qwen3-Next expert destination");
++                        }
++                        ggml_backend_buffer_set_usage(stream_buf, GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
++                        char * base = static_cast<char *>(ggml_backend_buffer_get_base(stream_buf));
++                        for (ggml_tensor * t : layout.tensors) {
++                            const std::string name = ggml_get_name(t);
++                            size_t offset = layout.down_offset;
++                            if (has_suffix(name, "ffn_gate_exps.weight")) {
++                                offset = layout.gate_offset;
++                            } else if (has_suffix(name, "ffn_up_exps.weight")) {
++                                offset = layout.up_offset;
++                            }
++                            if (ggml_backend_tensor_alloc(stream_buf, t, base + offset) != GGML_STATUS_SUCCESS) {
++                                ggml_backend_buffer_free(stream_buf);
++                                throw std::runtime_error("unable to bind shared Qwen3-Next expert destination");
++                            }
++                        }
++                        LLAMA_LOG_INFO("%s: aliased %zu Qwen3-Next expert tensors into a %.2f MiB shared destination\n",
++                                __func__, layout.tensors.size(), slot_bytes / 1024.0 / 1024.0);
++                        bufs.emplace_back(stream_buf);
++                    }
++                }
+                 buf = ggml_backend_alloc_ctx_tensors_from_buft(ctx, buft); // real buffer
+             }
+             if (buf == nullptr) {
+diff --git a/src/llama.cpp b/src/llama.cpp
+index 1609fec88..70bd14dc4 100644
+--- a/src/llama.cpp
++++ b/src/llama.cpp
+@@ -363,6 +363,15 @@ static std::pair<int, llama_model *> llama_model_load(struct gguf_context * meta
+             return {0, model_ptr.release()};
+         }
+ 
++        const char * stream_experts = getenv("MSI_QWEN3NEXT_STREAM_EXPERTS");
++        if (stream_experts != nullptr && strcmp(stream_experts, "1") == 0) {
++            if (model->arch != LLM_ARCH_QWEN3NEXT) {
++                throw std::runtime_error("MSI_QWEN3NEXT_STREAM_EXPERTS requires a Qwen3-Next model");
++            }
++            ml.stream_qwen3next_experts = true;
++            LLAMA_LOG_INFO("%s: enabling project-scoped Qwen3-Next streamed expert binding\n", __func__);
++        }
++
+         if (!model->load_tensors(ml)) {
+             return {-2, nullptr};
+         }
+@@ -614,4 +623,3 @@ const char * llama_print_system_info(void) {
+ 
+     return s.c_str();
+ }
+-
+-- 
+2.43.0
+

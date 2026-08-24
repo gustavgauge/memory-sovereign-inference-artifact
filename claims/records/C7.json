@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "claim_id": "C7",
+  "title": "Gemma cache transfer",
+  "population": {"exact_pairs": 5, "hardware": "NVIDIA GeForce RTX 3080 Ti"},
+  "exactness": {"complete_logits_and_tokens_equal_in_all_pairs": true},
+  "observations": [
+    {"pair": "u01", "execution_order": ["uncached", "cached"], "generated_outputs": 75, "uncached_h2d_bytes": 72662348640, "cached_h2d_bytes": 22544731468, "uncached_process_physical_read_bytes": 77868527616, "cached_process_physical_read_bytes": 27863085056, "uncached_decode_nanoseconds": 178962741264, "cached_decode_nanoseconds": 27339606178, "logits_sha256": "356449b0b69ceef5cc79403053fbf05c9bb1453ad105157262331f2eb83d8a11", "valid": true},
+    {"pair": "u02", "execution_order": ["cached", "uncached"], "generated_outputs": 128, "uncached_h2d_bytes": 114413090400, "cached_h2d_bytes": 33785315788, "uncached_process_physical_read_bytes": 119544578048, "cached_process_physical_read_bytes": 39070584832, "uncached_decode_nanoseconds": 302326794930, "cached_decode_nanoseconds": 56401962106, "logits_sha256": "7dedc6f8e3174b9c6a09f215bd4fb0a9fdefd44296b4e313f5db13f146555d3a", "valid": true},
+    {"pair": "u03", "execution_order": ["uncached", "cached"], "generated_outputs": 128, "uncached_h2d_bytes": 114413090400, "cached_h2d_bytes": 38104242680, "uncached_process_physical_read_bytes": 119535923200, "cached_process_physical_read_bytes": 43343765504, "uncached_decode_nanoseconds": 300178920590, "cached_decode_nanoseconds": 68917553721, "logits_sha256": "f8007f71330933129d0f3486eb26b0d8de91377377a65171677252b70cb70f7f", "valid": true},
+    {"pair": "u04", "execution_order": ["cached", "uncached"], "generated_outputs": 42, "uncached_h2d_bytes": 46166685600, "cached_h2d_bytes": 19032048868, "uncached_process_physical_read_bytes": 51404181504, "cached_process_physical_read_bytes": 24286019584, "uncached_decode_nanoseconds": 109946673455, "cached_decode_nanoseconds": 16663528307, "logits_sha256": "532ab99ce1eb1782ba0d08053570926f8457582f2a82cb1aab79154749260058", "valid": true},
+    {"pair": "u05", "execution_order": ["uncached", "cached"], "generated_outputs": 128, "uncached_h2d_bytes": 114413090400, "cached_h2d_bytes": 48160551152, "uncached_process_physical_read_bytes": 119560548352, "cached_process_physical_read_bytes": 53412257792, "uncached_decode_nanoseconds": 308097664407, "cached_decode_nanoseconds": 100359345372, "logits_sha256": "00cb261a57c398b8117f3495448bb719d45f67c1d173d845d2ef7361502c9101", "valid": true}
+  ],
+  "result": {"H2D_byte_reduction_fraction": 0.6502099623515784, "process_physical_read_reduction_fraction": 0.614735781870267, "decode_wall_reduction_fraction": 0.7751737231251555},
+  "resources": {"complete_cgroup_limit_bytes": 8589934592, "minimum_host_margin_bytes": 1859665920, "swap_peak_bytes": 0, "memory_event_deltas": 0},
+  "scope": "Five fixed prompt pairs, one observation per cell, and no sampling interval.",
+  "provenance": {"result_record_sha256": "6e6e78e95a0e5027a20106e19a6ab980e71be6763f71f68707eb85cd4b2af1c6"}
+}

@@ -1,0 +1,8 @@
+{"claim":"C8","assertions":[
+  {"json_pointer":"/exactness/complete_logits_equal","op":"eq","value":true},
+  {"json_pointer":"/ownership/control_complete_host_peak_bytes","op":"eq","value":6641348608},
+  {"json_pointer":"/ownership/bounded_source_complete_host_peak_bytes","op":"eq","value":2980458496},
+  {"json_pointer":"/lifecycle/submissions","op":"eq","value":14396},
+  {"json_pointer":"/lifecycle/completions","op":"eq","value":14396},
+  {"json_pointer":"/lifecycle/balanced","op":"eq","value":true}
+]}

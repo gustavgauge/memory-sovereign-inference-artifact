@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "artifact": "Qwen3-Next semantic-demand accounting audit",
+  "audited_at_utc": "2026-08-21T07:26:20Z",
+  "input_identities": {
+    "product_result_sha256": "4562a316a3a1c6564e5a53b756d57c18c5a231e279841690b266001939ed7b79",
+    "full64_certificate_sha256": "ca3d3a23f29f43785f300c2f4de56dd693805ed6444b47cb76f65d2e75470420",
+    "terminal_result_sha256": "e06f7257b8e9d448b700146f6c912277f4c37c33e0202a53ace11a6ffffde05a",
+    "model_sha256": "d103b2733ec1012a52d01edda66b7e5c24ae50508c9f99f5297ea459ef3c061a",
+    "adapter_sha256": "ca6370662df7af450290773fe64984196b8c47a75dbdb061367721461d37aa06",
+    "project_commit": "70bc7203d92b74e48aa01dbd5700f24ef06ff301"
+  },
+  "definitions": {
+    "representation_inventory": "The byte size of all canonical native tensor payloads in the model representation.",
+    "semantic_demand_lower_bound": "The deduplicated union of canonical managed-weight extents consumed by the authoritative native graph for at least one routed token.",
+    "scheduler_requested_union": "The deduplicated union requested by the scheduler; it is not used as the semantic-demand authority.",
+    "cumulative_traffic": "Logical or physical bytes transferred over time; it is not used as a capacity inventory."
+  },
+  "demand_authority": {
+    "router_surface": "ffn_moe_topk",
+    "capture_point": "authoritative router output before scheduling, cache lookup, prefetch, or source access",
+    "native_consumer": "stock_ggml_mul_mat_id_q4_k_q6_k",
+    "inclusion_rule": "A layer-expert object enters the demand union when at least one authoritative routed token selects that expert; the native dense expert kernel consumes its complete gate, up, and down projections.",
+    "prefetch_excluded_from_demand": true,
+    "scheduler_requests_excluded_from_demand": true
+  },
+  "route_coverage": {
+    "prefill_layer_events": 48,
+    "experts_per_layer": 512,
+    "managed_layer_expert_objects": 24576,
+    "trace_chunks": 8,
+    "recorded_prefill_events": 384,
+    "minimum_experts_demanded_per_event": 512,
+    "maximum_experts_demanded_per_event": 512,
+    "minimum_routed_token_count_per_object": 1,
+    "all_managed_experts_demanded_in_every_prefill_layer_event": true
+  },
+  "canonical_extent_union": {
+    "managed_objects": 24576,
+    "canonical_component_intervals": 73728,
+    "components_per_object": [
+      "gate",
+      "up",
+      "down"
+    ],
+    "gate_bytes_per_object": 589824,
+    "up_bytes_per_object": 589824,
+    "down_projection_classes": [
+      {
+        "layers": 24,
+        "bytes_per_object": 589824,
+        "bundle_bytes_per_object": 1769472
+      },
+      {
+        "layers": 24,
+        "bytes_per_object": 860160,
+        "bundle_bytes_per_object": 2039808
+      }
+    ],
+    "deduplication_key": "canonical file identity plus byte offset plus byte length",
+    "duplicate_component_intervals": 0,
+    "overlapping_component_intervals": 0,
+    "union_bytes": 46808432640,
+    "canonical_serialization": "Intervals sorted by file identity, byte offset, byte length, layer, expert, and component, then serialized as compact UTF-8 JSON with no trailing newline.",
+    "union_sha256": "bad5b23f5ac0b936fa3a4268c357a5cdaf15bf2d451045095e5a45f68ecee5e1"
+  },
+  "representation_inventory": {
+    "canonical_tensor_payload_bytes": 48405005312,
+    "managed_expert_payload_bytes": 46808432640,
+    "nonexpert_payload_bytes": 1596572672
+  },
+  "envelope_comparisons": {
+    "declared_contract": {
+      "host_cgroup_max_bytes": 11811160064,
+      "declared_whole_board_gpu_budget_bytes": 24696061952,
+      "aggregate_bytes": 36507222016,
+      "semantic_demand_excess_bytes": 10301210624
+    },
+    "host_hard_plus_physical_board": {
+      "host_cgroup_max_bytes": 11811160064,
+      "physical_board_bytes": 25769803776,
+      "aggregate_bytes": 37580963840,
+      "semantic_demand_excess_bytes": 9227468800
+    },
+    "linux_visible_host_plus_physical_board": {
+      "linux_visible_host_bytes": 16667594752,
+      "physical_board_bytes": 25769803776,
+      "aggregate_bytes": 42437398528,
+      "semantic_demand_excess_bytes": 4371034112,
+      "caveat": "Linux-visible host memory is an operating-system observation, not a claim about all physically installed host RAM."
+    }
+  },
+  "limitations": [
+    "The lower bound is workload-specific to the recorded prompt and output horizon.",
+    "It counts managed native expert tensor payloads, not transient activations or opaque runtime allocations.",
+    "It does not infer demand from scheduler requests, prefetches, or cumulative traffic."
+  ]
+}

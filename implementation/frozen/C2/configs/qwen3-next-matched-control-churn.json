@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "decision_id": "qwen3-next-matched-control-churn",
+  "classification": "decision-bearing",
+  "status": "FROZEN_FOR_EXECUTION",
+  "decision_consumer": "decide whether full MSI changes feasibility or material behavior relative to competent kernel-page-cache and minimal-synchronous-direct peers",
+  "objective": "Execute one correctness- and cache-matched Qwen3-Next P/D/F campaign at an aggregate-nonresident 11 GiB host budget, then either preserve a differentiated integrated-mechanism result or narrow the paper to its auditable evidence contract and engineering contribution.",
+  "claim_boundary": "One RTX 3090, one Qwen3-Next Q4_K_M artifact, one untouched 8192-token prompt, greedy 128-token generation, per-layer LRU64, and the exact binary and resource contracts below. No serving, multi-GPU, cross-hardware, broad-workload, race-freedom, or general optimality claim follows.",
+  "model": {
+    "path": "/data/ai/models/gguf/qwen3-next-80b-a3b-instruct/Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf",
+    "sha256": "d103b2733ec1012a52d01edda66b7e5c24ae50508c9f99f5297ea459ef3c061a",
+    "bytes": 48410988384,
+    "managed_expert_inventory_bytes": 46808432640
+  },
+  "runtime_identity": {
+    "private_worktree": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-llama",
+    "base_commit": "8ef78e644f559db4e8716b59bf76b8e11619337d",
+    "adapter_commit": "7206605099424f7ad7ca78c2783a60ec60f810f4",
+    "backend_dir": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-llama/build-msi-sm86/bin",
+    "graph": "stock_qwen3_next_llama_decode",
+    "sampler": "greedy with every EOG token masked to negative infinity for the frozen fixed horizon"
+  },
+  "runtime": {
+    "binary_path": "/data/ai/runs/memory-sovereign-inference/20260820T-qwen3-next-matched-control-churn-development/bin/qwen3-next-churn-adapter",
+    "binary_sha256": "7bd52530b6ade92b6f2e25f9c6783fa0e7f4f05d164a12cc33ad692d444be9af",
+    "adapter_source": "src/adapters/qwen3_next_plan_runtime_adapter.cpp",
+    "adapter_sha256": "b126d4b5882740ab4cde09c03b87834860b78b8fe46eb5898ed7b083ed15cc53",
+    "bounded_source_source": "src/memory/bounded_source_service.hpp",
+    "bounded_source_sha256": "a5f1453eb07e73f433fd94229ef380902493316f5ba6042295f937161addf4c2",
+    "observer_source": "tools/observe_qwen3_next_plan_consumer.py",
+    "observer_sha256": "76ffc0f0ca62edba523721505ab9025d655a508c78ee7ccb9f4b87a8c832b45e",
+    "bounded_launcher_source": "tools/run_qwen3_next_bounded_cell.sh",
+    "bounded_launcher_sha256": "b7973f298aa8ef36c8c966b9ed0f7128ef6531f038c6783ac82a1ca70b1c1032",
+    "cell_validator_source": "tools/validate_qwen3_next_churn_cell.py",
+    "cell_validator_sha256": "bf58e38e403a7dce4119346f1905be821f2362d03688225d287b93da05534419"
+  },
+  "hardware": {
+    "gpu_product": "NVIDIA GeForce RTX 3090",
+    "gpu_uuid": "GPU-38bca229-3688-c0be-cbdc-c24bfedbddce",
+    "physical_board_bytes": 25769803776,
+    "gpu_board_budget_bytes": 24696061952,
+    "host_cgroup_max_bytes": 11811160064,
+    "host_cgroup_swap_max_bytes": 0,
+    "minimum_margin_bytes": 536870912,
+    "required_foreign_compute_pids": []
+  },
+  "source_object_identity": {
+    "expert_tensor_count": 144,
+    "gate_up": {
+      "native_qtype": "Q4_K",
+      "tensor_count": 96,
+      "expert_bytes": 589824
+    },
+    "down": {
+      "q4_k_tensor_count": 24,
+      "q6_k_tensor_count": 24,
+      "q4_k_expert_bytes": 589824,
+      "q6_k_expert_bytes": 860160
+    },
+    "execution_time_conversion": false
+  },
+  "workloads": {
+    "qualification": {
+      "prompt_path": "fixtures/prompts/heldout/qwen-cycle-promotion/heldout_code.txt",
+      "prompt_sha256": "9db7c1c7bf637250b60ce23ab593e110d9330d03dbb2ecefe203c73666f54bc1",
+      "prompt_tokens": 256,
+      "output_tokens": 8,
+      "n_ubatch": 512,
+      "eog_policy": "mask all EOG tokens and force exactly 8 greedy outputs",
+      "claim_bearing": false
+    },
+    "campaign": {
+      "prompt_path": "/data/ai/capsules/memory-sovereign-inference/20260817-qwen-natural-utility-v2-c6b7382/preparation/prompts/lb_2wikimqa_1.txt",
+      "prompt_sha256": "5989ca040b0e3e3f45215ef4dfb6b7f0e8581b410e0bda5cfdf8e65b32efb148",
+      "prompt_tokens": 8192,
+      "output_tokens": 128,
+      "n_ubatch": 4096,
+      "eog_policy": "mask all EOG tokens and force exactly 128 greedy outputs",
+      "prompt_selection": "untouched support-preserving natural prompt selected before Qwen3-Next campaign output was observed",
+      "claim_bearing": true
+    }
+  },
+  "matched_invariants": [
+    "one adapter binary with a source-arm selector",
+    "same GGUF bytes and native expert qtypes",
+    "same stock graph, router, expert consumer, destination, greedy sampler, and object order",
+    "same independent per-layer LRU64 cache and final-state instrumentation",
+    "fresh process and complete cgroup per cell",
+    "no mmap model load",
+    "same 8192-token prompt, EOG-masked fixed 128-output horizon, and n_ubatch 4096"
+  ],
+  "arms": {
+    "P": {
+      "adapter_arm": "kernel_page_cache",
+      "source": "blocking buffered pread with pages first charged in the claim cgroup",
+      "direct_io": false,
+      "source_in_flight": 1,
+      "cache_advice": false,
+      "stop_rule": "stop P descendants after the first evidence-valid cell that reaches the host limit, loses required margin, swaps, OOMs, or incurs any memory.max event"
+    },
+    "D": {
+      "adapter_arm": "minimal_direct",
+      "source": "blocking O_DIRECT with one fixed registered aligned payload window and one fixed aligned scratch envelope",
+      "direct_io": true,
+      "source_in_flight": 1,
+      "excluded_machinery": [
+        "prefetch",
+        "asynchronous queue",
+        "Plan request epochs",
+        "Plan generations",
+        "Plan consumer accounting"
+      ]
+    },
+    "F": {
+      "adapter_arm": "full_msi",
+      "source": "bounded asynchronous O_DIRECT through eight registered windows",
+      "direct_io": true,
+      "source_in_flight": 8,
+      "required_machinery": [
+        "Plan tickets",
+        "generations",
+        "consumer accounting",
+        "reset",
+        "shutdown"
+      ]
+    }
+  },
+  "correctness_oracle": {
+    "adapter_arm": "sync_oracle",
+    "same_binary": true,
+    "source": "blocking buffered pread with extent-local POSIX_FADV_DONTNEED after each read",
+    "outside_candidate_timing": true,
+    "outside_candidate_resource_claim": true,
+    "oracle_cgroup_max_bytes": 68719476736,
+    "required_exact": [
+      "all 128 generated tokens and pieces",
+      "complete-vocabulary float logits for all 128 output steps",
+      "every sparse route event",
+      "source-object and native-qtype identity",
+      "consumer and model-memory identity",
+      "complete final per-layer LRU64 state"
+    ]
+  },
+  "churn_predicates": {
+    "cache_population_slots": 3072,
+    "minimum_aggregate_decode_generations": 9216,
+    "minimum_decode_generations_per_layer": 128,
+    "minimum_recycled_slot_fraction": 0.9,
+    "outcome_blind_rule": "Preserve a failure of any predicate; do not select a replacement prompt or extend output length after observation."
+  },
+  "ordered_blocks": [
+    ["P", "D", "F"],
+    ["D", "F", "P"],
+    ["F", "P", "D"],
+    ["F", "D", "P"],
+    ["D", "P", "F"],
+    ["P", "F", "D"]
+  ],
+  "df_relative_orders": [
+    ["D", "F"],
+    ["D", "F"],
+    ["F", "D"],
+    ["F", "D"],
+    ["D", "F"],
+    ["F", "D"]
+  ],
+  "repetition_rule": "Execute one P cell until its frozen stop rule fires; execute all six preordered D/F pairs. No outcome-selected resampling.",
+  "estimands": {
+    "paired_metrics": [
+      "complete request wall seconds",
+      "decode exposed source wait seconds",
+      "decode physical source bytes per post-prefill output",
+      "post-prefill outputs per decode second"
+    ],
+    "ratio_direction": "F divided by D",
+    "interval": "two-sided 95% Student-t interval on the mean paired log ratio with df=5, back-transformed",
+    "performance_gate": false,
+    "performance_eligibility": "Correctness, resource, and lifecycle admissibility are required. Frozen churn failure remains a primary negative but does not erase otherwise valid paired timing."
+  },
+  "terminal_rules": {
+    "F_failure": "Withdraw the strong integrated novelty claim if F fails frozen exactness, resource, lifecycle, or repetition requirements.",
+    "D_matches_F": "If D matches F in feasibility and material behavior, publish MSI primarily as rigorous open-source engineering and an auditable evidence contract.",
+    "P_fails_D_and_F_pass": "Conclude that direct source ownership changes feasibility; attribute Plan novelty only to demonstrated performance or fault behavior.",
+    "P_and_D_fail_F_pass": "Preserve the strongest architectural result: the complete MSI design changes feasibility."
+  },
+  "success_condition": "An evidence-valid full MSI population is oracle-exact, resource-admissible, lifecycle-balanced, clears all churn predicates in every cell, and materially separates from competent D in paired behavior or later deterministic integrated fault handling.",
+  "next_decision": "Execute the integrated deterministic fault campaign only if a meaningful residual integrated-mechanism claim survives this campaign. Qwen3.6 MTP and integrated Gemma populations remain deferred until that publication fork is resolved."
+}

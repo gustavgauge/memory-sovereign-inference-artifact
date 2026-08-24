@@ -1,0 +1,7 @@
+{"claim":"C2","assertions":[
+  {"json_pointer":"/workload/pairs","op":"eq","value":6},
+  {"json_pointer":"/admission/D_and_F_all_oracle_exact","op":"eq","value":true},
+  {"json_pointer":"/admission/D_and_F_all_resource_admissible","op":"eq","value":true},
+  {"json_pointer":"/paired_result/geometric_F_over_D_wall_ratio","op":"approx","value":0.32291333601697325},
+  {"json_pointer":"/paired_result/physical_source_bytes_per_decode_output_F","op":"approx","value":97667442.8976378}
+]}

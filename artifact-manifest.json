@@ -1,0 +1,495 @@
+{
+  "files": [
+    {
+      "bytes": 81,
+      "path": ".gitignore",
+      "sha256": "677857204c0fb3986c75ce85cd35f375d7a6c1f2b31185862ca1c7eac88e976a"
+    },
+    {
+      "bytes": 3545,
+      "path": "ARTIFACT.md",
+      "sha256": "e1678f29a004a2bd6f47fea9efa7bb567c8b21b30f9a88ea2b7f8f0196f8c379"
+    },
+    {
+      "bytes": 618,
+      "path": "CITATION.cff",
+      "sha256": "1c7cd081422f836487184e4c8198f05a67c5c320a693231870b07fd14355fd6e"
+    },
+    {
+      "bytes": 11358,
+      "path": "LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "bytes": 18657,
+      "path": "LICENSES/CC-BY-4.0.txt",
+      "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+    },
+    {
+      "bytes": 1153,
+      "path": "LICENSES/README.md",
+      "sha256": "c7c2ff7277841d910c64619a97d837cca601c9755a98b9c5b54703c4a737d150"
+    },
+    {
+      "bytes": 5749,
+      "path": "README.md",
+      "sha256": "303f152efe8b98bce94bb763803b4ba808d343837de059c30bd5b19ca9d66762"
+    },
+    {
+      "bytes": 26528,
+      "path": "artifact",
+      "sha256": "a1e707dd17aa07ebd0ba8d30e75e61968865d5e1f129ea2762363ab0b561a55d"
+    },
+    {
+      "bytes": 9377,
+      "path": "claims/claim-ledger.json",
+      "sha256": "43e71bb45763858b8a6b2f1dccb9e3f9362505b8a552601c21e3d74052d8b77f"
+    },
+    {
+      "bytes": 2313,
+      "path": "claims/expected/C1.json",
+      "sha256": "5f5ff954c4538d248d5f7bde8c994afcc1d15f2982507e3b8a3f417066c9225c"
+    },
+    {
+      "bytes": 258,
+      "path": "claims/expected/C10.json",
+      "sha256": "1132c641c175bad8858bde4abdb1d90746fb9af1563fe388375e521847e4f77b"
+    },
+    {
+      "bytes": 557,
+      "path": "claims/expected/C11.json",
+      "sha256": "27e55501e223c6a00b4d670db02e09eb7ab2c611e98077e477653d0913bfeda7"
+    },
+    {
+      "bytes": 422,
+      "path": "claims/expected/C12.json",
+      "sha256": "659ac4ace61cb0773aa06f58607706af10cd218119654adba5e9989cf5826450"
+    },
+    {
+      "bytes": 485,
+      "path": "claims/expected/C2.json",
+      "sha256": "91ae2b7d2de6dc08c67218c757930d534e961b57700a72207ae0ff10ccccae51"
+    },
+    {
+      "bytes": 482,
+      "path": "claims/expected/C3.json",
+      "sha256": "ffeb1819c3a97e6fec7eca51713b066f1b6e5f300d882d5b5235bfba803cf6cd"
+    },
+    {
+      "bytes": 701,
+      "path": "claims/expected/C4.json",
+      "sha256": "bdb629fb16ff98f31c2cc94a1fd05156e3bfe6423c6bd4828a5b9aab734ccf80"
+    },
+    {
+      "bytes": 502,
+      "path": "claims/expected/C5.json",
+      "sha256": "a0072395a0631fd51894149c58d5c4be99d248232dffbdc3b541c7615ca2d960"
+    },
+    {
+      "bytes": 566,
+      "path": "claims/expected/C6.json",
+      "sha256": "68284b30da8332586600c48684758568b0ca6fe74de21da1d7766b503affb441"
+    },
+    {
+      "bytes": 575,
+      "path": "claims/expected/C7.json",
+      "sha256": "3007d722036a4e7975c844e4d01f340e3925d4824934a9b4c73441128eae08e2"
+    },
+    {
+      "bytes": 509,
+      "path": "claims/expected/C8.json",
+      "sha256": "822ea10cad1a4a6e276701e8009d48d07fa56009e1b7697ab343e939c2b735f5"
+    },
+    {
+      "bytes": 434,
+      "path": "claims/expected/C9.json",
+      "sha256": "b30bf6fbcab47450a1118644554a5e61308f160e788b8dbdcc19ff0ba59304e1"
+    },
+    {
+      "bytes": 3829,
+      "path": "claims/records/C1.json",
+      "sha256": "8dd54068ed47aca7126a30334fbfe444d474350a82f2f439da77eb3e30d156e0"
+    },
+    {
+      "bytes": 710,
+      "path": "claims/records/C10.json",
+      "sha256": "03a01c6ededbc1a8eee8068b4c8b2338dde6e7363f96806dc0ff6af36a50acfc"
+    },
+    {
+      "bytes": 1928,
+      "path": "claims/records/C11.json",
+      "sha256": "cc4865e51d59a4035cad0d4d541d86f2e4666f58497f5ed2ca528fb61cfb1b04"
+    },
+    {
+      "bytes": 788,
+      "path": "claims/records/C12.json",
+      "sha256": "88e7fa900277cd981ee3be7f810677f08ca035801b2214cade6b7def71c63132"
+    },
+    {
+      "bytes": 1677,
+      "path": "claims/records/C2.json",
+      "sha256": "29ebe2b94cf3ed053f4acd63122e08ee3d8789c99d4b80ef002f760d36ef2da6"
+    },
+    {
+      "bytes": 1047,
+      "path": "claims/records/C3.json",
+      "sha256": "c2ca7498e92ca657cbff1b6fe9b45a6ff4bccc20c669b0a41158506fa0d3b1c9"
+    },
+    {
+      "bytes": 2323,
+      "path": "claims/records/C4.json",
+      "sha256": "3aa1cd4f85452087ac66af0ae09e4c4f432afe90e84fb359517212a26e62c1b7"
+    },
+    {
+      "bytes": 2615,
+      "path": "claims/records/C5.json",
+      "sha256": "67922edcd38e3dc712e975285c441c6f90e21b8774e28e91568eba9f31701eec"
+    },
+    {
+      "bytes": 2504,
+      "path": "claims/records/C6.json",
+      "sha256": "72b59f174b882f4c74628a74b511428a2939c8f0f11e81430da56c1102f713cf"
+    },
+    {
+      "bytes": 3037,
+      "path": "claims/records/C7.json",
+      "sha256": "ef3215cfd764aee24eea0e4693fad28fc846208103019a8418df4131bf90607e"
+    },
+    {
+      "bytes": 695,
+      "path": "claims/records/C8.json",
+      "sha256": "4432f76df666ac6029d5ab1d9517a78e7b230bf36cca0dcae776754338ffc14e"
+    },
+    {
+      "bytes": 3288,
+      "path": "claims/records/C9.json",
+      "sha256": "b3a576f4c5a880046bb376d9ff932dd6dfae83411c30fa55e6de049539f9e821"
+    },
+    {
+      "bytes": 776,
+      "path": "environment/hardware.json",
+      "sha256": "52c3959c9a079fd6fad883513a8d879ae00aaeb00091caa890881a2e3287bed7"
+    },
+    {
+      "bytes": 2657,
+      "path": "environment/models.json",
+      "sha256": "fed3669832079b4e2a33252ce58aae51a99a81347e3db2db1bfe3d91af68198a"
+    },
+    {
+      "bytes": 420,
+      "path": "environment/toolchains.json",
+      "sha256": "df3d817161e2f28cbf18a984799fbada041a08d084359feb02f833a1db84a2d0"
+    },
+    {
+      "bytes": 173,
+      "path": "evidence/manifest.toml",
+      "sha256": "793c9c64c89afa52f7d83cd0cadbf3e972af300728fd033e44c149c1848cf759"
+    },
+    {
+      "bytes": 13142,
+      "path": "evidence/replay/C1/certificate.json",
+      "sha256": "e579492219b3bd84c94d69052b8859b36b476da4721c5c3ccfebc2df133dbae9"
+    },
+    {
+      "bytes": 4569,
+      "path": "evidence/replay/C1/semantic-demand-audit.json",
+      "sha256": "11f4fa2da2915c0f6071518447947b7ee448a90f5f2b63df8dec509bdfa0fabc"
+    },
+    {
+      "bytes": 2925,
+      "path": "evidence/replay/C2/campaign-evaluation.json",
+      "sha256": "60dbdf28d7da5f46a53b1331b339b5c66e0b1017a8eaedc37dbb20d29580c492"
+    },
+    {
+      "bytes": 12335,
+      "path": "evidence/replay/C3/cell-certificates.json",
+      "sha256": "bb8335f8ea7fc5f1e0780ee9ed60d5afbcbd6fe3be753ce8328f03642442ebe6"
+    },
+    {
+      "bytes": 1527,
+      "path": "implementation/SOURCES.json",
+      "sha256": "40733d66d0621b05badbe9739f8d688aadd06bcce7720ff92ebaf8d66c95d097"
+    },
+    {
+      "bytes": 7514,
+      "path": "implementation/frozen/C1/configs/qwen3-next-p2-thin-vertical.json",
+      "sha256": "243c70b97a7baf4d0eadaaea36f11d8f11f7ecc3936c2a36477a6839f20b1ddb"
+    },
+    {
+      "bytes": 74215,
+      "path": "implementation/frozen/C1/src/adapters/qwen3_next_plan_runtime_adapter.cpp",
+      "sha256": "ca637a7c84e336862273f98e2334529df1082fee97f4e0f5f6bf2ea1893e5bdb"
+    },
+    {
+      "bytes": 17433,
+      "path": "implementation/frozen/C1/src/memory/bounded_source_service.hpp",
+      "sha256": "7a2d224375a5b8eed25472e2d3e4d5fdb4937f31546219ddaa1a52020cdabbca"
+    },
+    {
+      "bytes": 29689,
+      "path": "implementation/frozen/C1/src/memory/plan_service_bridge.cpp",
+      "sha256": "c77f3f5a6fcd6b038592939da1dbc0e25e8e573fcc0acd1588a7066ec88c5f58"
+    },
+    {
+      "bytes": 13317,
+      "path": "implementation/frozen/C1/src/memory/plan_service_bundle.hpp",
+      "sha256": "2ebd9563a51fe5bb9db4bb2bc5ee0735061a7ccb3899715c67c1f93f2bed02fa"
+    },
+    {
+      "bytes": 51909,
+      "path": "implementation/frozen/C1/src/memory/plan_v0.hpp",
+      "sha256": "131c5d0036e0e7ea5f9bb6c8c9d60d5767ebb4472ffc4b3817213cf75e981639"
+    },
+    {
+      "bytes": 10830,
+      "path": "implementation/frozen/C1/tools/observe_qwen3_next_plan_consumer.py",
+      "sha256": "36a30a1860375dc13c2ea2bcd2da720ad0a6d098a33b4398e1f7bca31022d8fb"
+    },
+    {
+      "bytes": 8044,
+      "path": "implementation/frozen/C1/tools/replay_qwen3_next_cache.py",
+      "sha256": "a8ac3bf9852132a64672761c4ee49efd61e150159fdda4e810d24548fe421b66"
+    },
+    {
+      "bytes": 1311,
+      "path": "implementation/frozen/C1/tools/run_qwen3_next_bounded_cell.sh",
+      "sha256": "b7973f298aa8ef36c8c966b9ed0f7128ef6531f038c6783ac82a1ca70b1c1032"
+    },
+    {
+      "bytes": 9444,
+      "path": "implementation/frozen/C1/tools/validate_qwen3_next_canary.py",
+      "sha256": "b5e60a81b8082017ef9d512703232814358be774214c6ce4dcc29f07194b6007"
+    },
+    {
+      "bytes": 5980,
+      "path": "implementation/frozen/C1/tools/validate_qwen3_next_cell.py",
+      "sha256": "68316b3813d04b6d7490328d2c7fe8a451142221645cd6f227a48c3307476519"
+    },
+    {
+      "bytes": 12393,
+      "path": "implementation/frozen/C1-contract/configs/qwen3-next-full64-oracle-confirmation.json",
+      "sha256": "738eabf5b23f9c63a3c68032c765b08ee4721357cf7eb640c91a388d37d6e87a"
+    },
+    {
+      "bytes": 1817,
+      "path": "implementation/frozen/C1-contract/tests/test_qwen3_next_full64_oracle_validator.py",
+      "sha256": "62a88475e41028faebd04842f51fb55636b5467bcd3c09a139512913af4c3801"
+    },
+    {
+      "bytes": 27070,
+      "path": "implementation/frozen/C1-contract/tools/validate_qwen3_next_full64_oracle.py",
+      "sha256": "4842faff0e3c1b440017d24aaa06c2d02ee78d93d642d6ff8979c3e7d97166c5"
+    },
+    {
+      "bytes": 9367,
+      "path": "implementation/frozen/C2/configs/qwen3-next-matched-control-churn.json",
+      "sha256": "d04a58d2880f2fa30535c7484c4d65c3b99e59afeaaf37ea80af67aa82503e2f"
+    },
+    {
+      "bytes": 94028,
+      "path": "implementation/frozen/C2/src/adapters/qwen3_next_plan_runtime_adapter.cpp",
+      "sha256": "b126d4b5882740ab4cde09c03b87834860b78b8fe46eb5898ed7b083ed15cc53"
+    },
+    {
+      "bytes": 18436,
+      "path": "implementation/frozen/C2/src/memory/bounded_source_service.hpp",
+      "sha256": "a5f1453eb07e73f433fd94229ef380902493316f5ba6042295f937161addf4c2"
+    },
+    {
+      "bytes": 29689,
+      "path": "implementation/frozen/C2/src/memory/plan_service_bridge.cpp",
+      "sha256": "c77f3f5a6fcd6b038592939da1dbc0e25e8e573fcc0acd1588a7066ec88c5f58"
+    },
+    {
+      "bytes": 13317,
+      "path": "implementation/frozen/C2/src/memory/plan_service_bundle.hpp",
+      "sha256": "2ebd9563a51fe5bb9db4bb2bc5ee0735061a7ccb3899715c67c1f93f2bed02fa"
+    },
+    {
+      "bytes": 51909,
+      "path": "implementation/frozen/C2/src/memory/plan_v0.hpp",
+      "sha256": "131c5d0036e0e7ea5f9bb6c8c9d60d5767ebb4472ffc4b3817213cf75e981639"
+    },
+    {
+      "bytes": 11234,
+      "path": "implementation/frozen/C2/tools/observe_qwen3_next_plan_consumer.py",
+      "sha256": "76ffc0f0ca62edba523721505ab9025d655a508c78ee7ccb9f4b87a8c832b45e"
+    },
+    {
+      "bytes": 8044,
+      "path": "implementation/frozen/C2/tools/replay_qwen3_next_cache.py",
+      "sha256": "a8ac3bf9852132a64672761c4ee49efd61e150159fdda4e810d24548fe421b66"
+    },
+    {
+      "bytes": 1311,
+      "path": "implementation/frozen/C2/tools/run_qwen3_next_bounded_cell.sh",
+      "sha256": "b7973f298aa8ef36c8c966b9ed0f7128ef6531f038c6783ac82a1ca70b1c1032"
+    },
+    {
+      "bytes": 9438,
+      "path": "implementation/frozen/C2/tools/validate_qwen3_next_canary.py",
+      "sha256": "4b8086e6acc3f5b769e7745f1574896fccf2290d3df70cb6986ae9c9a11d4750"
+    },
+    {
+      "bytes": 18842,
+      "path": "implementation/frozen/C2/tools/validate_qwen3_next_churn_cell.py",
+      "sha256": "bf58e38e403a7dce4119346f1905be821f2362d03688225d287b93da05534419"
+    },
+    {
+      "bytes": 6426,
+      "path": "implementation/frozen/C2/tools/validate_qwen3_next_product_cell.py",
+      "sha256": "302848bba4913affbf46e37c6c2821bffde720ad55fa8f767d006109ba9a222d"
+    },
+    {
+      "bytes": 6336,
+      "path": "implementation/frozen/C3-gemma/configs/gemma4-integrated-fault-transfer.json",
+      "sha256": "34284ba117ccae8ff694641d998b42b3db47622fb6b8285b574e7ec2ec7631d0"
+    },
+    {
+      "bytes": 72489,
+      "path": "implementation/frozen/C3-gemma/src/adapters/gemma4_plan_runtime_adapter.cpp",
+      "sha256": "88570b5db5a771ca89fcadcc7746039b7760c113f32636c2648b2361f9141fc4"
+    },
+    {
+      "bytes": 21153,
+      "path": "implementation/frozen/C3-gemma/src/memory/bounded_source_service.hpp",
+      "sha256": "1c74a7cfba92eb6c1ae9932b598458af341b0304d2b5c81b4d57050d015e51a5"
+    },
+    {
+      "bytes": 29689,
+      "path": "implementation/frozen/C3-gemma/src/memory/plan_service_bridge.cpp",
+      "sha256": "c77f3f5a6fcd6b038592939da1dbc0e25e8e573fcc0acd1588a7066ec88c5f58"
+    },
+    {
+      "bytes": 13317,
+      "path": "implementation/frozen/C3-gemma/src/memory/plan_service_bundle.hpp",
+      "sha256": "2ebd9563a51fe5bb9db4bb2bc5ee0735061a7ccb3899715c67c1f93f2bed02fa"
+    },
+    {
+      "bytes": 51909,
+      "path": "implementation/frozen/C3-gemma/src/memory/plan_v0.hpp",
+      "sha256": "131c5d0036e0e7ea5f9bb6c8c9d60d5767ebb4472ffc4b3817213cf75e981639"
+    },
+    {
+      "bytes": 11234,
+      "path": "implementation/frozen/C3-gemma/tools/observe_qwen3_next_plan_consumer.py",
+      "sha256": "76ffc0f0ca62edba523721505ab9025d655a508c78ee7ccb9f4b87a8c832b45e"
+    },
+    {
+      "bytes": 1311,
+      "path": "implementation/frozen/C3-gemma/tools/run_qwen3_next_bounded_cell.sh",
+      "sha256": "b7973f298aa8ef36c8c966b9ed0f7128ef6531f038c6783ac82a1ca70b1c1032"
+    },
+    {
+      "bytes": 10834,
+      "path": "implementation/frozen/C3-gemma/tools/validate_gemma4_fault_transfer_cell.py",
+      "sha256": "a9edcd16358365e302d68298d92381a4e4f9ab08c04145840bc59359eec5c247"
+    },
+    {
+      "bytes": 6611,
+      "path": "implementation/frozen/C3-qwen/configs/qwen3-next-integrated-fault-campaign.json",
+      "sha256": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276"
+    },
+    {
+      "bytes": 106449,
+      "path": "implementation/frozen/C3-qwen/src/adapters/qwen3_next_plan_runtime_adapter.cpp",
+      "sha256": "029ed3af631d12d845455249cc4738ab3944b4f6eb2809389859bc771e3c9150"
+    },
+    {
+      "bytes": 21153,
+      "path": "implementation/frozen/C3-qwen/src/memory/bounded_source_service.hpp",
+      "sha256": "1c74a7cfba92eb6c1ae9932b598458af341b0304d2b5c81b4d57050d015e51a5"
+    },
+    {
+      "bytes": 29689,
+      "path": "implementation/frozen/C3-qwen/src/memory/plan_service_bridge.cpp",
+      "sha256": "c77f3f5a6fcd6b038592939da1dbc0e25e8e573fcc0acd1588a7066ec88c5f58"
+    },
+    {
+      "bytes": 13317,
+      "path": "implementation/frozen/C3-qwen/src/memory/plan_service_bundle.hpp",
+      "sha256": "2ebd9563a51fe5bb9db4bb2bc5ee0735061a7ccb3899715c67c1f93f2bed02fa"
+    },
+    {
+      "bytes": 51909,
+      "path": "implementation/frozen/C3-qwen/src/memory/plan_v0.hpp",
+      "sha256": "131c5d0036e0e7ea5f9bb6c8c9d60d5767ebb4472ffc4b3817213cf75e981639"
+    },
+    {
+      "bytes": 11234,
+      "path": "implementation/frozen/C3-qwen/tools/observe_qwen3_next_plan_consumer.py",
+      "sha256": "76ffc0f0ca62edba523721505ab9025d655a508c78ee7ccb9f4b87a8c832b45e"
+    },
+    {
+      "bytes": 1311,
+      "path": "implementation/frozen/C3-qwen/tools/run_qwen3_next_bounded_cell.sh",
+      "sha256": "b7973f298aa8ef36c8c966b9ed0f7128ef6531f038c6783ac82a1ca70b1c1032"
+    },
+    {
+      "bytes": 12024,
+      "path": "implementation/frozen/C3-qwen/tools/validate_qwen3_next_fault_cell.py",
+      "sha256": "07500dc96ac535bfcfa1684ee654d1519c53b22ae65d29bf0046ddb7ba69c677"
+    },
+    {
+      "bytes": 7939,
+      "path": "implementation/source-manifest.json",
+      "sha256": "b8e9c3e7f6736c4f2747422f8c13a12a0915a2884b4a1e63019547a915cc1a69"
+    },
+    {
+      "bytes": 78715,
+      "path": "paper/main.tex",
+      "sha256": "c831498e59bea905f94a41ef596f267e6d3933d944c680fe3412004374ce7db4"
+    },
+    {
+      "bytes": 154225,
+      "path": "paper/preprint.pdf",
+      "sha256": "5970caf76163060f7558ec47c9bda5e1d4da1c2621026094a8e97553d60e38e1"
+    },
+    {
+      "bytes": 8150,
+      "path": "paper/references.bib",
+      "sha256": "bd79206fdb253acd2673fb0d0a788343e45375751275bba08ac7b29c1c5323a2"
+    },
+    {
+      "bytes": 1707,
+      "path": "paper/usenix-2020-09.sty",
+      "sha256": "7db553bb42cb0d0ccade8195f1699077fdaf71779337deb607fc06d62e62f6db"
+    },
+    {
+      "bytes": 8573,
+      "path": "runtime/gemma4/patches/0001-Add-Gemma-streamed-expert-destination-hook.patch",
+      "sha256": "ec057bba93107c151a82291f0f9bc6642d66fab03a5021f8a6ff19f0b5241065"
+    },
+    {
+      "bytes": 692,
+      "path": "runtime/gemma4/upstream.json",
+      "sha256": "9851da01cf2167384e10c132e4b6b2688da9e9e7a56ba6a1453fc6a12433ecdf"
+    },
+    {
+      "bytes": 8583,
+      "path": "runtime/qwen3-next/patches/0001-Add-Qwen3-Next-streamed-expert-destination-hook.patch",
+      "sha256": "8461b1ed128cacd24946b4f3b2c9b5597886305ec9c21b46d38d98074d18e982"
+    },
+    {
+      "bytes": 857,
+      "path": "runtime/qwen3-next/upstream.json",
+      "sha256": "72b3d0593af60bf3041d7a9549962b5900b0217c6c9498021a3f294717e442a7"
+    },
+    {
+      "bytes": 961,
+      "path": "runtime/reconstruct.sh",
+      "sha256": "c575c1946c0497a12d87a72b8f7d46510c9ad1ba115eb1715336d48033a541aa"
+    },
+    {
+      "bytes": 6596,
+      "path": "tools/audit_qwen3_next_semantic_demand.py",
+      "sha256": "4ca33dab27ec0e4e00c6cdd49a28c68454b50c5280f134cd0e2542718dbf9fcf"
+    },
+    {
+      "bytes": 2269,
+      "path": "workloads/execution-reconstruction.json",
+      "sha256": "dfbf7a6ff5c728137ca90249d1967c9bc7a32c4daf7cbf3b4455e81674d34adc"
+    }
+  ],
+  "schema_version": 1
+}

@@ -1,0 +1,9 @@
+{"claim":"C11","assertions":[
+  {"json_pointer":"/placement/resource_contract_passed","op":"eq","value":true},
+  {"json_pointer":"/placement/gpu_margin_mib","op":"eq","value":685},
+  {"json_pointer":"/task_population/admitted_cells","op":"eq","value":1},
+  {"json_pointer":"/task_population/required_cells","op":"eq","value":4},
+  {"json_pointer":"/task_population/criterion_passed","op":"eq","value":false},
+  {"json_pointer":"/task_population/observations","op":"len","value":4},
+  {"json_pointer":"/placement/memory_event_deltas","op":"eq","value":0}
+]}

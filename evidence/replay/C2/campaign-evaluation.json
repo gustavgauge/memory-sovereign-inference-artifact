@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "artifact": "Six-pair complete asynchronous-component comparison (sanitized publication operands)",
+  "source_evaluation_sha256": "af9f830dfc8e7bc6b4727f418c8fc60567ddd93ba7fc9a6f9aed5c120f97d2b3",
+  "execution_order": [
+    "P",
+    "D1",
+    "F1",
+    "D2",
+    "F2",
+    "D3",
+    "F3",
+    "D4",
+    "F4",
+    "D5",
+    "F5",
+    "D6",
+    "F6"
+  ],
+  "arm_definitions": {
+    "P": "buffered source",
+    "D": "blocking one-window direct source",
+    "F": "complete eight-window asynchronous direct-source component"
+  },
+  "paired_population": {
+    "pairs": 6,
+    "independent_repetitions_per_cell": 1,
+    "confidence_interval_scope": "Repetition at one fixed model, prompt, output horizon, runtime, GPU, storage, cache policy, and resource-contract identity; not generalization over prompts or systems."
+  },
+  "derived": {
+    "paired_estimands": {
+      "complete_request_wall_seconds": {
+        "D_arithmetic_mean": 101.73878823233333,
+        "D_values": [
+          102.358418006,
+          102.227930775,
+          100.031930752,
+          101.99636969,
+          102.202233307,
+          101.615846864
+        ],
+        "F_arithmetic_mean": 32.8518043555,
+        "F_values": [
+          32.866802199,
+          32.820482344,
+          32.837359182,
+          32.88863728,
+          32.887042112,
+          32.810503016
+        ],
+        "degrees_of_freedom": 5,
+        "direction": "F_divided_by_D",
+        "geometric_mean_ratio": 0.32291333601697325,
+        "paired_ratios": [
+          0.32109525371008985,
+          0.32105200697289565,
+          0.32826877313215774,
+          0.3224490967664753,
+          0.32178398698208793,
+          0.3228876600311438
+        ],
+        "student_t_95_interval": [
+          0.3200896627610479,
+          0.3257619183267789
+        ]
+      },
+      "decode_physical_source_bytes_per_output": {
+        "D_arithmetic_mean": 97667442.8976378,
+        "D_values": [
+          97667442.8976378,
+          97667442.8976378,
+          97667442.8976378,
+          97667442.8976378,
+          97667442.8976378,
+          97667442.8976378
+        ],
+        "F_arithmetic_mean": 97667442.8976378,
+        "F_values": [
+          97667442.8976378,
+          97667442.8976378,
+          97667442.8976378,
+          97667442.8976378,
+          97667442.8976378,
+          97667442.8976378
+        ],
+        "degrees_of_freedom": 5,
+        "direction": "F_divided_by_D",
+        "geometric_mean_ratio": 1.0,
+        "paired_ratios": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "student_t_95_interval": [
+          1.0,
+          1.0
+        ]
+      }
+    }
+  },
+  "causal_boundary": "F jointly changes queue depth, asynchronous queueing, I/O-compute overlap, and lifecycle implementation relative to D. The comparison does not isolate bookkeeping from eight-way concurrency."
+}

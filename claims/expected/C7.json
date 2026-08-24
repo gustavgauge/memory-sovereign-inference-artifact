@@ -1,0 +1,8 @@
+{"claim":"C7","assertions":[
+  {"json_pointer":"/exactness/complete_logits_and_tokens_equal_in_all_pairs","op":"eq","value":true},
+  {"json_pointer":"/result/H2D_byte_reduction_fraction","op":"approx","value":0.6502099623515784},
+  {"json_pointer":"/result/process_physical_read_reduction_fraction","op":"approx","value":0.614735781870267},
+  {"json_pointer":"/result/decode_wall_reduction_fraction","op":"approx","value":0.7751737231251555},
+  {"json_pointer":"/resources/memory_event_deltas","op":"eq","value":0},
+  {"json_pointer":"/observations","op":"len","value":5}
+]}

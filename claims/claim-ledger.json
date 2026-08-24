@@ -1,0 +1,124 @@
+{
+  "schema_version": 3,
+  "artifact": "memory_sovereign_inference_claim_ledger",
+  "evidence_cutoff": "2026-08-21",
+  "repository_url": "https://github.com/gustavgauge/memory-sovereign-inference-artifact",
+  "scope": "Each entry binds one paper claim to a publication-facing record, content digest, machine-readable assertions, and an offline replay command.",
+  "query_template": "./artifact verify --claim CLAIM_ID",
+  "replay_template": "./artifact replay --claim CLAIM_ID",
+  "reproducibility_levels": {
+    "audit": "Verify C1-C12 record digests and expected assertions offline.",
+    "replay": "Recompute the reported arithmetic and categorical outcomes from packaged records and replay inputs.",
+    "reconstruction": "Inspect the recorded source, runtime patches, contracts, model identities, workload identities, and resource controls needed for a new execution of the principal C1-C3 paths."
+  },
+  "claims": {
+    "C1": {
+      "headline": "Output-exact execution beyond full residency",
+      "certificate_scope": "W / H=cgroup-charge hard / G=audit+physical / E[E_64-out,64] / L=clean no-fault closure",
+      "paper_claim": "At one Qwen3-Next 32K+64 identity, the complete representation and the semantic-demand lower bound exceed the declared aggregate budget; the execution remains resource-admissible and matches one zero-cache oracle across all 64 complete logit rows, token IDs, response bytes, recorded routes, the seven-field consumer identity, and the two-entry destination identity.",
+      "source": {"path": "claims/records/C1.json", "sha256": "8dd54068ed47aca7126a30334fbfe444d474350a82f2f439da77eb3e30d156e0"},
+      "supporting_sources": [
+        {"path": "evidence/replay/C1/certificate.json", "sha256": "e579492219b3bd84c94d69052b8859b36b476da4721c5c3ccfebc2df133dbae9", "json_pointers": ["/checks/all64_logit_rows_byte_exact", "/checks/consumer_exact", "/checks/destination_exact"]},
+        {"path": "evidence/replay/C1/semantic-demand-audit.json", "sha256": "11f4fa2da2915c0f6071518447947b7ee448a90f5f2b63df8dec509bdfa0fabc", "json_pointers": ["/canonical_extent_union/union_bytes", "/canonical_extent_union/union_sha256", "/envelope_comparisons/declared_contract/semantic_demand_excess_bytes"]}
+      ],
+      "expected_assertions": "claims/expected/C1.json",
+      "capsule_command": "./artifact verify --claim C1",
+      "replay_command": "./artifact replay --claim C1"
+    },
+    "C2": {
+      "headline": "Six-pair complete asynchronous-component comparison",
+      "paper_claim": "Across six fixed-identity D/F pairs, the complete eight-window asynchronous component has geometric F/D wall ratio 0.322913 with paired-log 95% interval [0.320090, 0.325762], or 3.10x reciprocal, at identical physical source bytes per output.",
+      "source": {"path": "claims/records/C2.json", "sha256": "29ebe2b94cf3ed053f4acd63122e08ee3d8789c99d4b80ef002f760d36ef2da6"},
+      "supporting_sources": [
+        {"path": "evidence/replay/C2/campaign-evaluation.json", "sha256": "60dbdf28d7da5f46a53b1331b339b5c66e0b1017a8eaedc37dbb20d29580c492", "json_pointers": ["/derived/paired_estimands/complete_request_wall_seconds/D_values", "/derived/paired_estimands/complete_request_wall_seconds/F_values"]}
+      ],
+      "expected_assertions": "claims/expected/C2.json",
+      "capsule_command": "./artifact verify --claim C2",
+      "replay_command": "./artifact replay --claim C2"
+    },
+    "C3": {
+      "headline": "All fourteen prespecified fault/control cells",
+      "certificate_scope": "L[F14] at the recorded Qwen3-Next and Gemma executable identities",
+      "paper_claim": "All fourteen prespecified Qwen3-Next and Gemma control/fault cells satisfy their validators; seven fatal cells publish no accepted output and five recoverable cells remain control-exact and close.",
+      "source": {"path": "claims/records/C3.json", "sha256": "c2ca7498e92ca657cbff1b6fe9b45a6ff4bccc20c669b0a41158506fa0d3b1c9"},
+      "supporting_sources": [
+        {"path": "evidence/replay/C3/cell-certificates.json", "sha256": "bb8335f8ea7fc5f1e0780ee9ed60d5afbcbd6fe3be753ce8328f03642442ebe6", "json_pointers": ["/cells"]}
+      ],
+      "expected_assertions": "claims/expected/C3.json",
+      "capsule_command": "./artifact verify --claim C3",
+      "replay_command": "./artifact replay --claim C3"
+    },
+    "C4": {
+      "headline": "Qwen3.6 multi-token-prediction temporal amortization",
+      "paper_claim": "One Qwen3.6 8,192+512 request produces one prefill output and traverses the remaining 511 outputs in 104 target traversals at 12.016 end-to-end output tokens/s with scoped exact logits, tokens, and hybrid-state rebasing.",
+      "source": {"path": "claims/records/C4.json", "sha256": "3aa1cd4f85452087ac66af0ae09e4c4f432afe90e84fb359517212a26e62c1b7"},
+      "expected_assertions": "claims/expected/C4.json",
+      "capsule_command": "./artifact verify --claim C4",
+      "replay_command": "./artifact replay --claim C4"
+    },
+    "C5": {
+      "headline": "Qwen-specific natural-task utility",
+      "paper_claim": "The fixed Qwen-specific population preserves aggregate F1 0.590909 while request-plus-reset time falls from 331.884 to 235.917 seconds (28.916%).",
+      "source": {"path": "claims/records/C5.json", "sha256": "67922edcd38e3dc712e975285c441c6f90e21b8774e28e91568eba9f31701eec"},
+      "expected_assertions": "claims/expected/C5.json",
+      "capsule_command": "./artifact verify --claim C5",
+      "replay_command": "./artifact replay --claim C5"
+    },
+    "C6": {
+      "headline": "Shared-Plan comparison with preserved F1 miss",
+      "paper_claim": "The distinct shared-Plan comparison reduces request-plus-reset time from 335.400 to 250.785 seconds (25.228%) while preserving the prespecified -0.0015625 aggregate F1 criterion miss.",
+      "source": {"path": "claims/records/C6.json", "sha256": "72b59f174b882f4c74628a74b511428a2939c8f0f11e81430da56c1102f713cf"},
+      "expected_assertions": "claims/expected/C6.json",
+      "capsule_command": "./artifact verify --claim C6",
+      "replay_command": "./artifact replay --claim C6"
+    },
+    "C7": {
+      "headline": "Gemma cache transfer",
+      "paper_claim": "Across five exact Gemma pairs, H2D bytes fall 65.021%, process physical reads 61.474%, and aggregate decode time 77.517%.",
+      "source": {"path": "claims/records/C7.json", "sha256": "ef3215cfd764aee24eea0e4693fad28fc846208103019a8418df4131bf90607e"},
+      "expected_assertions": "claims/expected/C7.json",
+      "capsule_command": "./artifact verify --claim C7",
+      "replay_command": "./artifact replay --claim C7"
+    },
+    "C8": {
+      "headline": "Bounded Gemma direct source",
+      "paper_claim": "The bounded Gemma source reduces complete-host peak from 6,641,348,608 to 2,980,458,496 bytes and balances 14,396 direct-I/O submissions and completions with scoped exactness.",
+      "source": {"path": "claims/records/C8.json", "sha256": "4432f76df666ac6029d5ab1d9517a78e7b230bf36cca0dcae776754338ffc14e"},
+      "expected_assertions": "claims/expected/C8.json",
+      "capsule_command": "./artifact verify --claim C8",
+      "replay_command": "./artifact replay --claim C8"
+    },
+    "C9": {
+      "headline": "Cross-model product comparison",
+      "paper_claim": "On five response-format-aligned repository tasks, both paths complete 5/5, while Qwen3-Next is 4.965x slower in total wall time and 14.126x slower to first useful action than resident Qwen3.6.",
+      "source": {"path": "claims/records/C9.json", "sha256": "b3a576f4c5a880046bb376d9ff932dd6dfae83411c30fa55e6de049539f9e821"},
+      "expected_assertions": "claims/expected/C9.json",
+      "capsule_command": "./artifact verify --claim C9",
+      "replay_command": "./artifact replay --claim C9"
+    },
+    "C10": {
+      "headline": "GPT-OSS-20B storage-device result",
+      "paper_claim": "The prespecified GPT-OSS-20B contiguous-pack criterion fails on the recorded RTX 3080 Ti storage path while fixed-history exactness and lifecycle closure pass.",
+      "source": {"path": "claims/records/C10.json", "sha256": "03a01c6ededbc1a8eee8068b4c8b2338dde6e7363f96806dc0ff6af36a50acfc"},
+      "expected_assertions": "claims/expected/C10.json",
+      "capsule_command": "./artifact verify --claim C10",
+      "replay_command": "./artifact replay --claim C10"
+    },
+    "C11": {
+      "headline": "Llama-3.3-70B placement and task result",
+      "paper_claim": "The exact Llama-3.3-70B IQ2_M placement meets its GPU margin but passes only one of four fixed task-admission cells.",
+      "source": {"path": "claims/records/C11.json", "sha256": "cc4865e51d59a4035cad0d4d541d86f2e4666f58497f5ed2ca528fb61cfb1b04"},
+      "expected_assertions": "claims/expected/C11.json",
+      "capsule_command": "./artifact verify --claim C11",
+      "replay_command": "./artifact replay --claim C11"
+    },
+    "C12": {
+      "headline": "Shared-Plan execution parity",
+      "paper_claim": "The shared-Plan execution-parity process schedules 3,384 objects per request through 144 host windows and eight GPU slots with balanced teardown.",
+      "source": {"path": "claims/records/C12.json", "sha256": "88e7fa900277cd981ee3be7f810677f08ca035801b2214cade6b7def71c63132"},
+      "expected_assertions": "claims/expected/C12.json",
+      "capsule_command": "./artifact verify --claim C12",
+      "replay_command": "./artifact replay --claim C12"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{"claim":"C5","assertions":[
+  {"json_pointer":"/population/control_processes","op":"eq","value":8},
+  {"json_pointer":"/population/candidate_processes","op":"eq","value":8},
+  {"json_pointer":"/quality/control_mean_f1","op":"approx","value":0.5909090909090909},
+  {"json_pointer":"/quality/candidate_mean_f1","op":"approx","value":0.5909090909090909},
+  {"json_pointer":"/timing/reduction_fraction","op":"approx","value":0.2891597316481632},
+  {"json_pointer":"/observations","op":"len","value":8}
+]}

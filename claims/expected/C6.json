@@ -1,0 +1,8 @@
+{"claim":"C6","assertions":[
+  {"json_pointer":"/timing/control_request_plus_reset_seconds","op":"approx","value":335.399560221},
+  {"json_pointer":"/timing/candidate_request_plus_reset_seconds","op":"approx","value":250.785151736},
+  {"json_pointer":"/timing/reduction_fraction","op":"approx","value":0.25227942585627205},
+  {"json_pointer":"/quality/aggregate_eight_direction_f1_delta","op":"approx","value":-0.0015625},
+  {"json_pointer":"/quality/prespecified_f1_criterion","op":"eq","value":"failed"},
+  {"json_pointer":"/observations","op":"len","value":8}
+]}

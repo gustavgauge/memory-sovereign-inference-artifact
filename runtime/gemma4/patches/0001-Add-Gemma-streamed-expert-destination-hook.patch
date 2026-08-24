@@ -1,0 +1,172 @@
+From 05f332a0b031aa18041622e26f37e6a7c1fe82f0 Mon Sep 17 00:00:00 2001
+From: Lukas Stepanek <luki.step@proton.me>
+Date: Wed, 19 Aug 2026 00:12:14 +0200
+Subject: [PATCH] Add Gemma streamed expert destination hook
+
+---
+ src/llama-model-loader.cpp | 16 +++++++++
+ src/llama-model-loader.h   |  3 ++
+ src/llama-model.cpp        | 69 ++++++++++++++++++++++++++++++++++++++
+ src/llama.cpp              | 10 +++++-
+ 4 files changed, 97 insertions(+), 1 deletion(-)
+
+diff --git a/src/llama-model-loader.cpp b/src/llama-model-loader.cpp
+index c645d0785..c9296c7d7 100644
+--- a/src/llama-model-loader.cpp
++++ b/src/llama-model-loader.cpp
+@@ -17,6 +17,17 @@ static const size_t kiB = 1024;
+ static const size_t MiB = 1024*kiB;
+ static const size_t GiB = 1024*MiB;
+ 
++bool llama_tensor_is_streamed_expert(const char * name) {
++    int layer = -1;
++    char suffix[128] = {};
++    if (sscanf(name, "blk.%d.%127s", &layer, suffix) != 2 || layer < 0) {
++        return false;
++    }
++    return strcmp(suffix, "ffn_gate_up_exps.weight") == 0 ||
++           strcmp(suffix, "ffn_down_exps.weight") == 0 ||
++           strcmp(suffix, "ffn_down_exps.scale") == 0;
++}
++
+ const char * llama_file_version_name(llama_fver version) {
+     switch (version) {
+         case GGUF_FILE_VERSION_V1: return "GGUF V1 (support until nov 2023)";
+@@ -1525,6 +1536,11 @@ bool llama_model_loader::load_all_data(
+             continue;
+         }
+ 
++        if (stream_expert_weights && llama_tensor_is_streamed_expert(ggml_get_name(cur))) {
++            size_done += ggml_nbytes(cur);
++            continue;
++        }
++
+         if (progress_callback) {
+             if (!progress_callback((float) size_done / size_data, progress_callback_user_data)) {
+                 return false;
+diff --git a/src/llama-model-loader.h b/src/llama-model-loader.h
+index c476026d3..05f0f61b3 100644
+--- a/src/llama-model-loader.h
++++ b/src/llama-model-loader.h
+@@ -79,6 +79,7 @@ struct llama_model_loader {
+     bool use_direct_io = false;
+     bool check_tensors;
+     bool no_alloc;
++    bool stream_expert_weights = false;
+ 
+     llama_files files;
+     llama_ftype ftype;
+@@ -205,3 +206,5 @@ struct llama_model_loader {
+ 
+     void print_info() const;
+ };
++
++bool llama_tensor_is_streamed_expert(const char * name);
+diff --git a/src/llama-model.cpp b/src/llama-model.cpp
+index 8bf20a716..062a1edab 100644
+--- a/src/llama-model.cpp
++++ b/src/llama-model.cpp
+@@ -1484,6 +1484,75 @@ bool llama_model_base::load_tensors(llama_model_loader & ml) {
+                     t->buffer = buf; // set dummy buffer for weights so that the backend scheduler won't try to allocate them
+                 }
+             } else {
++                if (ml.stream_expert_weights) {
++                    struct streamed_layout {
++                        size_t gate_up_bytes = 0;
++                        size_t down_bytes = 0;
++                        size_t scale_bytes = 0;
++                        size_t gate_up_offset = 0;
++                        size_t down_offset = 0;
++                        size_t scale_offset = 0;
++                        std::vector<ggml_tensor *> tensors;
++                    } layout;
++                    const auto has_suffix = [](const std::string & value, const char * suffix) {
++                        const size_t suffix_size = strlen(suffix);
++                        return value.size() >= suffix_size &&
++                               value.compare(value.size() - suffix_size, suffix_size, suffix) == 0;
++                    };
++                    for (ggml_tensor * t = ggml_get_first_tensor(ctx); t != nullptr; t = ggml_get_next_tensor(ctx, t)) {
++                        if (!llama_tensor_is_streamed_expert(ggml_get_name(t))) {
++                            continue;
++                        }
++                        layout.tensors.push_back(t);
++                        const std::string name = ggml_get_name(t);
++                        const size_t alloc_size = ggml_backend_buft_get_alloc_size(buft, t);
++                        if (has_suffix(name, "ffn_gate_up_exps.weight")) {
++                            layout.gate_up_bytes = std::max(layout.gate_up_bytes, alloc_size);
++                        } else if (has_suffix(name, "ffn_down_exps.weight")) {
++                            layout.down_bytes = std::max(layout.down_bytes, alloc_size);
++                        } else if (has_suffix(name, "ffn_down_exps.scale")) {
++                            layout.scale_bytes = std::max(layout.scale_bytes, alloc_size);
++                        }
++                    }
++                    if (!layout.tensors.empty()) {
++                        ggml_backend_dev_t stream_dev = ggml_backend_buft_get_device(buft);
++                        if (stream_dev == nullptr ||
++                            ggml_backend_dev_type(stream_dev) != GGML_BACKEND_DEVICE_TYPE_GPU ||
++                            buft != ggml_backend_dev_buffer_type(stream_dev)) {
++                            throw std::runtime_error("streamed Gemma 4 experts require the default GPU buffer type");
++                        }
++                        if (layout.gate_up_bytes == 0 || layout.down_bytes == 0 || layout.scale_bytes == 0) {
++                            throw std::runtime_error("streamed Gemma 4 expert component set is incomplete");
++                        }
++                        const size_t alignment = ggml_backend_buft_get_alignment(buft);
++                        layout.gate_up_offset = 0;
++                        layout.down_offset = GGML_PAD(layout.gate_up_bytes, alignment);
++                        layout.scale_offset = GGML_PAD(layout.down_offset + layout.down_bytes, alignment);
++                        const size_t slot_bytes = GGML_PAD(layout.scale_offset + layout.scale_bytes, alignment);
++                        ggml_backend_buffer_t stream_buf = ggml_backend_buft_alloc_buffer(buft, slot_bytes);
++                        if (stream_buf == nullptr) {
++                            throw std::runtime_error("unable to allocate shared Gemma 4 expert destination");
++                        }
++                        ggml_backend_buffer_set_usage(stream_buf, GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
++                        char * base = static_cast<char *>(ggml_backend_buffer_get_base(stream_buf));
++                        for (ggml_tensor * t : layout.tensors) {
++                            const std::string name = ggml_get_name(t);
++                            size_t offset = layout.scale_offset;
++                            if (has_suffix(name, "ffn_gate_up_exps.weight")) {
++                                offset = layout.gate_up_offset;
++                            } else if (has_suffix(name, "ffn_down_exps.weight")) {
++                                offset = layout.down_offset;
++                            }
++                            if (ggml_backend_tensor_alloc(stream_buf, t, base + offset) != GGML_STATUS_SUCCESS) {
++                                ggml_backend_buffer_free(stream_buf);
++                                throw std::runtime_error("unable to bind shared Gemma 4 expert destination");
++                            }
++                        }
++                        LLAMA_LOG_INFO("%s: aliased %zu Gemma 4 expert tensors into a %.2f MiB shared destination\n",
++                                __func__, layout.tensors.size(), slot_bytes / 1024.0 / 1024.0);
++                        bufs.emplace_back(stream_buf);
++                    }
++                }
+                 buf = ggml_backend_alloc_ctx_tensors_from_buft(ctx, buft); // real buffer
+             }
+             if (buf == nullptr) {
+diff --git a/src/llama.cpp b/src/llama.cpp
+index dfe30ce8f..7c1a38685 100644
+--- a/src/llama.cpp
++++ b/src/llama.cpp
+@@ -324,6 +324,15 @@ static std::pair<int, llama_model *> llama_model_load(struct gguf_context * meta
+             return {0, model_ptr.release()};
+         }
+ 
++        const char * stream_experts = getenv("MSI_GEMMA4_STREAM_EXPERTS");
++        if (stream_experts != nullptr && strcmp(stream_experts, "1") == 0) {
++            if (model->arch != LLM_ARCH_GEMMA4) {
++                throw std::runtime_error("MSI_GEMMA4_STREAM_EXPERTS requires a Gemma 4 model");
++            }
++            ml.stream_expert_weights = true;
++            LLAMA_LOG_INFO("%s: enabling project-scoped Gemma 4 streamed expert binding\n", __func__);
++        }
++
+         if (!model->load_tensors(ml)) {
+             return {-2, nullptr};
+         }
+@@ -575,4 +584,3 @@ const char * llama_print_system_info(void) {
+ 
+     return s.c_str();
+ }
+-
+-- 
+2.43.0
+

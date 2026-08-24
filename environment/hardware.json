@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "reference_system": {
+    "cpu": "AMD Ryzen 7 5800X 8-Core Processor",
+    "cpu_cores": 8,
+    "cpu_threads": 16,
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "physical_gpu_memory_bytes": 25769803776,
+    "declared_whole_board_budget_bytes": 24696061952,
+    "complete_host_cgroup_limit_bytes": 11811160064,
+    "minimum_margin_bytes": 536870912,
+    "storage_device": "WD_BLACK SN850X 2000GB",
+    "storage_transport": "NVMe",
+    "storage_filesystem": "ext4"
+  },
+  "measurement_boundary": "Host memory charges attributed by cgroup v2 to the complete target process hierarchy are hard-capped; this is not a total-causal-host-byte claim. GPU memory is whole-board observed against a declared budget and reserved margin; it is not hard-partitioned."
+}

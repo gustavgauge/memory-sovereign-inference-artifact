@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "claim_id": "C11",
+  "title": "Llama-3.3-70B placement and task result",
+  "representation": {"format": "IQ2_M", "project_commit": "14e7e8ed4909970dea5c032d4edc5c6d1736b0ad"},
+  "placement": {
+    "cpu_tensor_role": "grouped-query value projections",
+    "published_tensor_payload_bytes": 24111431936,
+    "cpu_embedding_bytes": 451461120,
+    "cpu_grouped_query_value_projection_bytes": 377487360,
+    "cuda_tensor_payload_bytes": 23282483456,
+    "q4_kv_cache_bytes": 802160640,
+    "residual_runtime_bytes": 462520064,
+    "predicted_all_in_gpu_bytes": 24547164160,
+    "usable_gpu_bytes": 25288507392,
+    "predicted_gpu_margin_bytes": 741343232,
+    "observed_whole_board_gpu_peak_mib": 23432,
+    "gpu_margin_mib": 685,
+    "complete_host_peak_bytes": 1392177152,
+    "complete_host_margin_bytes": 7197757440,
+    "memory_event_deltas": 0,
+    "swap_peak_bytes": 0,
+    "resource_contract_passed": true
+  },
+  "task_population": {
+    "admitted_cells": 1,
+    "required_cells": 4,
+    "criterion_passed": false,
+    "observations": [
+      {"task": "inventory_ledger", "exact": true, "output_tokens_per_second": 18.7572, "outcome": "all required values exact"},
+      {"task": "interval_union", "exact": false, "output_tokens_per_second": 18.365, "outcome": "touching intervals were incorrectly left separate"},
+      {"task": "dependency_schedule", "exact": false, "output_tokens_per_second": 18.6222, "outcome": "returned path A-B-D instead of A-C-D"},
+      {"task": "cache_accounting", "exact": false, "output_tokens_per_second": 18.6741, "outcome": "reported 2009472 and 1618752 bytes instead of 1990656 and 1597440"}
+    ]
+  },
+  "scope": "The placement result is positive; the fixed four-cell task-admission criterion failed, so the planned economics experiment was not run.",
+  "provenance": {"result_record_sha256": "a167d202aef05f1f3a26eaa292bf50f3ab4878d838df65d5db7c7c38e13f007e"}
+}

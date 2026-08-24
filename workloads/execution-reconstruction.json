@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "purpose": "Execution-reconstruction specifications for the principal C1-C3 paths, identifying the recorded source, contract, model, workload, and environment inputs.",
+  "contracts": {
+    "C1": {
+      "source_snapshot": "implementation/frozen/C1",
+      "experiment_contract": "implementation/frozen/C1-contract/configs/qwen3-next-full64-oracle-confirmation.json",
+      "model_sha256": "d103b2733ec1012a52d01edda66b7e5c24ae50508c9f99f5297ea459ef3c061a",
+      "prompt_sha256": "c9b183f5dfb02a330fba524a2fb28d5d8c8c9fa74115afa5cbcf8075767904f2",
+      "evidence_status": "Recorded source and contract packaged; rebuilding requires the pinned model, runtime toolchain, hardware/resource controls, and local path bindings. Each resulting run has its own execution identity."
+    },
+    "C2": {
+      "source_snapshot": "implementation/frozen/C2",
+      "experiment_contract": "implementation/frozen/C2/configs/qwen3-next-matched-control-churn.json",
+      "model_sha256": "d103b2733ec1012a52d01edda66b7e5c24ae50508c9f99f5297ea459ef3c061a",
+      "evidence_status": "Recorded source and contract packaged; rebuilding requires the pinned model, runtime toolchain, storage and hardware identities, resource controls, and local path bindings."
+    },
+    "C3-qwen": {
+      "source_snapshot": "implementation/frozen/C3-qwen",
+      "experiment_contract": "implementation/frozen/C3-qwen/configs/qwen3-next-integrated-fault-campaign.json",
+      "model_sha256": "d103b2733ec1012a52d01edda66b7e5c24ae50508c9f99f5297ea459ef3c061a",
+      "evidence_status": "Recorded fault-instrumented source and contract packaged; rebuilding requires the pinned model, runtime toolchain, hardware/resource controls, and local path bindings."
+    },
+    "C3-gemma": {
+      "source_snapshot": "implementation/frozen/C3-gemma",
+      "experiment_contract": "implementation/frozen/C3-gemma/configs/gemma4-integrated-fault-transfer.json",
+      "model_sha256": "3eca3b8f6d7baf218a7dd6bba5fb59a56ee25fe2d567b6f5f589b4f697eca51d",
+      "evidence_status": "Recorded fault-instrumented source and contract packaged; rebuilding requires provider-authorized model acquisition, the pinned runtime toolchain, hardware/resource controls, and local path bindings."
+    }
+  }
+}

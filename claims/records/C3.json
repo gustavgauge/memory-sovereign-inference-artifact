@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "claim_id": "C3",
+  "title": "Prespecified fault-transition population",
+  "evidence_cutoff": "2026-08-21",
+  "models": ["Qwen3-Next", "Gemma 4"],
+  "population": {
+    "prespecified_cells": 14,
+    "valid_cells": 14,
+    "fatal_cells": 7,
+    "recoverable_cells": 5,
+    "control_cells": 2,
+    "representative_cross_adapter_transitions": ["short_read", "stale_completion", "held_consumer"]
+  },
+  "outcomes": {
+    "fatal_cells": "zero accepted tokens or logits, no invalid readiness or H2D publication, and drained source executor",
+    "recoverable_cells": "control-exact under the cell validator with complete lifecycle closure"
+  },
+  "claim_boundary": "These are results for fourteen named cells in two fault-instrumented executables, not a reliability rate, race-freedom proof, or fault injection into the C1 executable.",
+  "provenance": {
+    "result_record_sha256": "a0e6031f9d9d8514d3190fd8dac601dec8a8a547ff7c3d1af0d6831500b75bc1",
+    "cell_certificates": "evidence/replay/C3/cell-certificates.json"
+  }
+}

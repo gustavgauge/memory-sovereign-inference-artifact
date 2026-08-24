@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "claim_id": "C10",
+  "title": "GPT-OSS-20B storage-device result",
+  "outcome": "prespecified criterion failed",
+  "result": {"fixed_history_exact": true, "lifecycle_balanced": true, "packed_direct_batch_wall_seconds": 22.14558230900104, "packed_effective_direct_service_bytes_per_second": 1085040502.6483998, "minimum_required_packed_bytes_per_second": 5207451705.6966095, "memory_max_events": 1349},
+  "scope": "The tested contiguous-pack premise failed on the recorded RTX 3080 Ti storage path; no claim is made about faster storage devices or other representations.",
+  "provenance": {"result_record_sha256": "3fc10672fdc30b5f5096bcddbcb13fd34d9fcf94e33d151989258725fa6fbde3"}
+}

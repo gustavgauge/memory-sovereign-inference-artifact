@@ -1,0 +1,10 @@
+{"claim":"C4","assertions":[
+  {"json_pointer":"/exactness/token_ids_equal","op":"eq","value":true},
+  {"json_pointer":"/exactness/complete_logits_equal","op":"eq","value":true},
+  {"json_pointer":"/exactness/hybrid_state_equal_after_every_commit","op":"eq","value":true},
+  {"json_pointer":"/result/target_traversals","op":"eq","value":104},
+  {"json_pointer":"/result/committed_outputs_per_target_traversal","op":"approx","value":4.913461538},
+  {"json_pointer":"/result/end_to_end_output_tokens_per_second","op":"approx","value":12.015576994},
+  {"json_pointer":"/exactness/full_logit_rows_checked","op":"eq","value":723},
+  {"json_pointer":"/resources/memory_event_deltas","op":"eq","value":0}
+]}

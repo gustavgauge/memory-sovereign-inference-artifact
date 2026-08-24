@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "redistribution": "Model files are not included. Acquisition remains subject to each provider's license and access terms.",
+  "verification": "After acquisition, verify both the byte length and SHA-256 digest before treating a file as the recorded representation.",
+  "models": [
+    {
+      "role": "C1-C3 Qwen3-Next",
+      "repository": "Qwen/Qwen3-Next-80B-A3B-Instruct-GGUF",
+      "revision": "4c8630cf7af926a9c5095cb4bbbbc65d36e20f77",
+      "filename": "Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf",
+      "url": "https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct-GGUF/resolve/4c8630cf7af926a9c5095cb4bbbbc65d36e20f77/Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf",
+      "bytes": 48410988384,
+      "sha256": "d103b2733ec1012a52d01edda66b7e5c24ae50508c9f99f5297ea459ef3c061a"
+    },
+    {
+      "role": "C4 Qwen3.6 target",
+      "repository": "AtomicChat/Qwen3.6-27B-GGUF",
+      "revision": "227d5b156eecc32bdff66fe07680ccdadfe1744f",
+      "filename": "qwen36-27b-Q4_K_M.gguf",
+      "url": "https://huggingface.co/AtomicChat/Qwen3.6-27B-GGUF/resolve/227d5b156eecc32bdff66fe07680ccdadfe1744f/qwen36-27b-Q4_K_M.gguf",
+      "upstream_model": "Qwen/Qwen3.6-27B",
+      "upstream_license": "Apache-2.0",
+      "bytes": 16547399168,
+      "sha256": "f0863123e9f79c1f43bb6d4f2d7bc64541a4e92f7242c3ddae649731c03cdd09"
+    },
+    {
+      "role": "C4 Qwen3.6 target-plus-MTP representation",
+      "repository": "unsloth/Qwen3.6-27B-MTP-GGUF",
+      "revision": "5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace",
+      "filename": "Qwen3.6-27B-Q4_K_M.gguf",
+      "url": "https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF/resolve/5cb35eb3dcbf52dbce5f87dbc64df6aaffadcace/Qwen3.6-27B-Q4_K_M.gguf",
+      "upstream_model": "Qwen/Qwen3.6-27B",
+      "upstream_license": "Apache-2.0",
+      "bytes": 17106773120,
+      "sha256": "a7cbd3ecc0e3f9b333edee61ae66bc87ed713c5d49587a8355814722ed329e0f",
+      "recorded_composite_identity_sha256": "79e80b7a2237412aad13bdd40151ab0c04a104429182f9b719f0bb47d181b7cd"
+    },
+    {
+      "role": "C7-C8 and C3 transfer Gemma 4",
+      "repository": "google/gemma-4-26B-A4B-it-qat-q4_0-gguf",
+      "revision": "d1c082be9cf3c8a514acf63b8761f4b41935842e",
+      "filename": "gemma-4-26B_q4_0-it.gguf",
+      "url": "https://huggingface.co/google/gemma-4-26B-A4B-it-qat-q4_0-gguf/resolve/d1c082be9cf3c8a514acf63b8761f4b41935842e/gemma-4-26B_q4_0-it.gguf",
+      "access_note": "Acquisition may require accepting the provider's terms and authenticating with the hosting service.",
+      "bytes": 14439363584,
+      "sha256": "3eca3b8f6d7baf218a7dd6bba5fb59a56ee25fe2d567b6f5f589b4f697eca51d"
+    }
+  ]
+}

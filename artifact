@@ -1,0 +1,482 @@
+#!/usr/bin/env python3
+"""Audit and replay the Memory-Sovereign Inference research artifact."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import statistics
+import sys
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parent
+LEDGER = ROOT / "claims" / "claim-ledger.json"
+MANIFEST = ROOT / "artifact-manifest.json"
+SOURCE_MANIFEST = ROOT / "implementation" / "source-manifest.json"
+T_CRITICAL_95_DF5 = 2.570581835636314
+REL_TOL = 1e-9
+ABS_TOL = 1e-9
+
+
+class ArtifactError(RuntimeError):
+    pass
+
+
+def load_json(path: Path) -> Any:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ArtifactError(f"cannot load {path.relative_to(ROOT)}: {exc}") from exc
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def pointer(document: Any, raw_pointer: str) -> Any:
+    if raw_pointer == "":
+        return document
+    if not raw_pointer.startswith("/"):
+        raise ArtifactError(f"invalid JSON pointer: {raw_pointer}")
+    current = document
+    for token in raw_pointer[1:].split("/"):
+        token = token.replace("~1", "/").replace("~0", "~")
+        try:
+            current = current[int(token)] if isinstance(current, list) else current[token]
+        except (KeyError, IndexError, ValueError, TypeError) as exc:
+            raise ArtifactError(f"missing JSON pointer {raw_pointer}") from exc
+    return current
+
+
+def close(actual: float, expected: float, tolerance: float = ABS_TOL) -> bool:
+    return math.isclose(actual, expected, rel_tol=REL_TOL, abs_tol=tolerance)
+
+
+def claims_for(argument: str | None, all_claims: bool) -> list[str]:
+    ledger = load_json(LEDGER)
+    known = list(ledger["claims"])
+    if all_claims:
+        return known
+    if argument not in ledger["claims"]:
+        raise ArtifactError(f"unknown claim {argument!r}; choose one of {', '.join(known)}")
+    return [argument]
+
+
+def source_entries(claim: dict[str, Any]) -> list[dict[str, Any]]:
+    return [claim["source"], *claim.get("supporting_sources", [])]
+
+
+def check_assertion(document: Any, assertion: dict[str, Any]) -> None:
+    json_pointer = assertion["json_pointer"]
+    actual = pointer(document, json_pointer)
+    operation = assertion["op"]
+    expected = assertion.get("value")
+    if operation == "eq" and actual != expected:
+        raise ArtifactError(f"{json_pointer}: expected {expected!r}, got {actual!r}")
+    if operation == "approx" and not close(float(actual), float(expected), assertion.get("abs_tol", ABS_TOL)):
+        raise ArtifactError(f"{json_pointer}: expected approximately {expected}, got {actual}")
+    if operation == "len" and len(actual) != int(expected):
+        raise ArtifactError(f"{json_pointer}: expected length {expected}, got {len(actual)}")
+    if operation == "gt" and not actual > expected:
+        raise ArtifactError(f"{json_pointer}: expected > {expected}, got {actual}")
+    if operation == "ge" and not actual >= expected:
+        raise ArtifactError(f"{json_pointer}: expected >= {expected}, got {actual}")
+
+
+def verify_claim(claim_id: str, quiet: bool = False) -> None:
+    ledger = load_json(LEDGER)
+    claim = ledger["claims"][claim_id]
+    documents: dict[str, Any] = {}
+    for entry in source_entries(claim):
+        relative = entry["path"]
+        path = ROOT / relative
+        if not path.is_file():
+            raise ArtifactError(f"{claim_id}: missing {relative}")
+        actual_digest = sha256(path)
+        if actual_digest != entry["sha256"]:
+            raise ArtifactError(
+                f"{claim_id}: digest mismatch for {relative}: {actual_digest} != {entry['sha256']}"
+            )
+        if path.suffix == ".json":
+            document = load_json(path)
+            documents[relative] = document
+            for raw_pointer in entry.get("json_pointers", []):
+                pointer(document, raw_pointer)
+        else:
+            text = path.read_text(encoding="utf-8")
+            for locator in entry.get("locator", "").split(";"):
+                locator = locator.strip()
+                if locator and locator not in text:
+                    raise ArtifactError(f"{claim_id}: locator {locator!r} absent from {relative}")
+
+    expected_path = ROOT / claim["expected_assertions"]
+    expected = load_json(expected_path)
+    for assertion in expected["assertions"]:
+        relative = assertion.get("source", claim["source"]["path"])
+        document = documents.get(relative)
+        if document is None:
+            document = load_json(ROOT / relative)
+        check_assertion(document, assertion)
+
+    expected_verify = f"./artifact verify --claim {claim_id}"
+    expected_replay = f"./artifact replay --claim {claim_id}"
+    if claim.get("capsule_command") != expected_verify or claim.get("replay_command") != expected_replay:
+        raise ArtifactError(f"{claim_id}: claim commands do not match the stable interface")
+
+    paper = (ROOT / "paper" / "main.tex").read_text(encoding="utf-8")
+    digest_prefix = claim["source"]["sha256"][:12]
+    for required in (
+        f"\\claimref{{{claim_id}}}",
+        f"\\hypertarget{{claim:{claim_id}}}{{{claim_id}}}",
+        digest_prefix,
+    ):
+        if required not in paper:
+            raise ArtifactError(f"{claim_id}: paper ledger is missing {required!r}")
+    if not quiet:
+        print(f"PASS verify {claim_id}: {len(source_entries(claim))} source object(s)")
+
+
+def verify_source_manifest() -> None:
+    recorded = load_json(SOURCE_MANIFEST)
+    expected_paths = {
+        path.relative_to(ROOT).as_posix()
+        for path in (ROOT / "implementation" / "frozen").rglob("*")
+        if path.is_file()
+    }
+    recorded_paths = {entry["path"] for entry in recorded["files"]}
+    if recorded_paths != expected_paths:
+        raise ArtifactError("implementation/source-manifest.json does not match the source export")
+    for entry in recorded["files"]:
+        path = ROOT / entry["path"]
+        if sha256(path) != entry["sha256"]:
+            raise ArtifactError(f"source digest mismatch for {entry['path']}")
+    print(f"PASS source manifest: {len(recorded_paths)} files")
+
+
+def geometric_ratio_interval(d_values: list[float], f_values: list[float]) -> tuple[float, float, float]:
+    if len(d_values) != len(f_values) or len(d_values) < 2:
+        raise ArtifactError("paired ratio requires equal populations with at least two pairs")
+    logs = [math.log(f / d) for d, f in zip(d_values, f_values)]
+    mean_log = statistics.fmean(logs)
+    half_width = T_CRITICAL_95_DF5 * statistics.stdev(logs) / math.sqrt(len(logs))
+    return math.exp(mean_log), math.exp(mean_log - half_width), math.exp(mean_log + half_width)
+
+
+def replay_c1() -> dict[str, Any]:
+    record = load_json(ROOT / "claims/records/C1.json")
+    certificate = load_json(ROOT / "evidence/replay/C1/certificate.json")
+    audit = load_json(ROOT / "evidence/replay/C1/semantic-demand-audit.json")
+    exactness = certificate["exactness"]
+    required_checks = (
+        "all64_tokens_exact",
+        "all64_logit_rows_byte_exact",
+        "whole_logits_file_byte_exact",
+        "all_routes_exact",
+        "response_exact",
+        "consumer_exact",
+        "destination_exact",
+    )
+    failed_checks = [name for name in required_checks if certificate["checks"].get(name) is not True]
+    if failed_checks:
+        raise ArtifactError(f"C1: exactness checks failed: {failed_checks!r}")
+    if exactness["candidate_row_sha256"] != exactness["oracle_row_sha256"]:
+        raise ArtifactError("C1: candidate and oracle row digests differ")
+    if exactness["candidate_logits_sha256"] != exactness["oracle_logits_sha256"]:
+        raise ArtifactError("C1: complete logits digests differ")
+    contract = record["resource_contract"]
+    demand = record["representation_and_demand"]
+    route = audit["route_coverage"]
+    extents = audit["canonical_extent_union"]
+    if route["prefill_layer_events"] * route["experts_per_layer"] != route["managed_layer_expert_objects"]:
+        raise ArtifactError("C1: route coverage does not reproduce the managed-object population")
+    union_bytes = sum(
+        item["layers"]
+        * route["experts_per_layer"]
+        * (extents["gate_bytes_per_object"] + extents["up_bytes_per_object"] + item["bytes_per_object"])
+        for item in extents["down_projection_classes"]
+    )
+    if union_bytes != extents["union_bytes"]:
+        raise ArtifactError("C1: semantic extent union does not reproduce")
+    if extents["canonical_component_intervals"] != route["managed_layer_expert_objects"] * len(extents["components_per_object"]):
+        raise ArtifactError("C1: canonical interval count does not reproduce")
+    declared = audit["envelope_comparisons"]["declared_contract"]
+    if declared["host_cgroup_max_bytes"] + declared["declared_whole_board_gpu_budget_bytes"] != declared["aggregate_bytes"]:
+        raise ArtifactError("C1: declared aggregate envelope does not reproduce")
+    if union_bytes - declared["aggregate_bytes"] != declared["semantic_demand_excess_bytes"]:
+        raise ArtifactError("C1: semantic-demand excess does not reproduce")
+    result = {
+        "rows": len(exactness["candidate_row_sha256"]),
+        "bytes_per_row": exactness["bytes_per_row"],
+        "payload_excess_bytes": contract["payload_excess_over_declared_aggregate_bytes"],
+        "semantic_union_excess_bytes": contract["semantic_demand_excess_over_declared_aggregate_bytes"],
+        "semantic_union_sha256": demand["semantic_extent_union_sha256"],
+        "semantic_objects": route["managed_layer_expert_objects"],
+        "semantic_intervals": extents["canonical_component_intervals"],
+        "consumer_identity_fields": record["exactness"]["consumer_identity_fields"],
+        "consumer_identity_sha256": record["exactness"]["consumer_identity_sha256"],
+        "destination_identity_entries": record["exactness"]["model_memory_destination_entries"],
+        "destination_identity_sha256": record["exactness"]["model_memory_destination_identity_sha256"],
+        "source_path_canary_outputs": record["source_path_canary"]["generated_outputs"],
+        "source_path_canary_objects": record["source_path_canary"]["managed_layer_expert_objects_covered"],
+    }
+    expected = {
+        "rows": 64,
+        "bytes_per_row": 607744,
+        "payload_excess_bytes": 11897783296,
+        "semantic_union_excess_bytes": 10301210624,
+        "semantic_union_sha256": "bad5b23f5ac0b936fa3a4268c357a5cdaf15bf2d451045095e5a45f68ecee5e1",
+        "semantic_objects": 24576,
+        "semantic_intervals": 73728,
+        "consumer_identity_fields": 7,
+        "consumer_identity_sha256": "f5ae6bc54adde32e436041c56eca24edea13f466119a1c4fd22f14af70165754",
+        "destination_identity_entries": 2,
+        "destination_identity_sha256": "e23ab31279328a3782e728e257aa7ccc382df7275f88c2e7bc787d4fe2a7f3cc",
+        "source_path_canary_outputs": 8,
+        "source_path_canary_objects": 24576,
+    }
+    if result != expected:
+        raise ArtifactError(f"C1 replay mismatch: {result!r}")
+    return result
+
+
+def replay_c2() -> dict[str, Any]:
+    raw = load_json(ROOT / "evidence/replay/C2/campaign-evaluation.json")
+    estimand = raw["derived"]["paired_estimands"]["complete_request_wall_seconds"]
+    ratio, lower, upper = geometric_ratio_interval(estimand["D_values"], estimand["F_values"])
+    if not all(close(a, b) for a, b in zip((ratio, lower, upper), (estimand["geometric_mean_ratio"], *estimand["student_t_95_interval"]))):
+        raise ArtifactError("C2: paired-log result does not reproduce")
+    return {
+        "execution_order": "P, D1, F1, D2, F2, D3, F3, D4, F4, D5, F5, D6, F6",
+        "paired_F_over_D": [f / d for d, f in zip(estimand["D_values"], estimand["F_values"])],
+        "geometric_F_over_D": ratio,
+        "interval_95": [lower, upper],
+        "reciprocal": 1.0 / ratio,
+    }
+
+
+def replay_c3() -> dict[str, Any]:
+    certificates = load_json(ROOT / "evidence/replay/C3/cell-certificates.json")["cells"]
+    empty_sha256 = hashlib.sha256(b"").hexdigest()
+    required_common = ("real_consumer", "workload_shape", "zero_cache", "resource_predicates")
+    for cell in certificates:
+        checks = cell["checks"]
+        if not cell["valid"] or any(checks.get(name) is not True for name in required_common):
+            raise ArtifactError(f"C3: invalid common predicate in {cell['model']} {cell['cell']}")
+        if cell["class"] == "fatal":
+            required = ("fatal_classified", "fault_triggered", "zero_generated_tokens", "zero_logits", "zero_accepted_after_fault", "no_invalid_publication", "source_drained")
+            if any(checks.get(name) is not True for name in required) or cell["input_sha256"]["logits"] != empty_sha256:
+                raise ArtifactError(f"C3: invalid fatal predicate in {cell['model']} {cell['cell']}")
+        elif cell["class"] == "recoverable":
+            required = ("recoverable_classified", "fault_triggered", "exact_logits", "exact_tokens", "exact_routes", "exact_source_state", "lifecycle_closed")
+            if any(checks.get(name) is not True for name in required):
+                raise ArtifactError(f"C3: invalid recoverable predicate in {cell['model']} {cell['cell']}")
+            if cell["input_sha256"]["logits"] != cell["input_sha256"]["control_logits"]:
+                raise ArtifactError(f"C3: recoverable logits digest differs in {cell['model']} {cell['cell']}")
+        elif cell["class"] == "control":
+            required = ("fault_not_triggered", "eight_outputs", "lifecycle_closed")
+            if any(checks.get(name) is not True for name in required):
+                raise ArtifactError(f"C3: invalid control predicate in {cell['model']} {cell['cell']}")
+        else:
+            raise ArtifactError(f"C3: unknown cell class {cell['class']!r}")
+    certificate_counts = {name: sum(cell["class"] == name for cell in certificates) for name in ("fatal", "recoverable", "control")}
+    result = {"cells": len(certificates), "fatal": certificate_counts["fatal"], "recoverable": certificate_counts["recoverable"]}
+    if result != {"cells": 14, "fatal": 7, "recoverable": 5}:
+        raise ArtifactError(f"C3 replay mismatch: {result!r}")
+    if len(certificates) != 14 or certificate_counts != {"fatal": 7, "recoverable": 5, "control": 2}:
+        raise ArtifactError(f"C3 certificate population mismatch: {certificate_counts!r}")
+    return result
+
+
+def replay_compact(claim_id: str) -> dict[str, Any]:
+    ledger = load_json(LEDGER)
+    source = load_json(ROOT / ledger["claims"][claim_id]["source"]["path"])
+    if claim_id == "C4":
+        traversals = source["result"]["target_traversals"]
+        timing = source["timing"]
+        exactness = source["exactness"]
+        result = {
+            "request_outputs": 512,
+            "prefill_outputs": 1,
+            "traversed_outputs": source["result"]["decode_outputs_traversed"],
+            "target_traversals": traversals,
+            "outputs_per_traversal": source["result"]["decode_outputs_traversed"] / traversals,
+            "end_to_end_output_tokens_per_second": 512 / (timing["request_milliseconds"] / 1000),
+            "generation_output_tokens_per_second": 511 / (timing["generation_milliseconds"] / 1000),
+        }
+        if not close(result["outputs_per_traversal"], source["result"]["committed_outputs_per_target_traversal"]):
+            raise ArtifactError("C4: temporal amortization does not reproduce")
+        if not close(result["end_to_end_output_tokens_per_second"], timing["end_to_end_output_tokens_per_second"]):
+            raise ArtifactError("C4: end-to-end rate does not reproduce")
+        if not close(result["generation_output_tokens_per_second"], timing["generation_output_tokens_per_second"]):
+            raise ArtifactError("C4: generation rate does not reproduce")
+        if exactness["oracle_output_token_hash"] != exactness["output_token_hash"] or exactness["shared_prefix_hash_before"] != exactness["shared_prefix_hash_after"]:
+            raise ArtifactError("C4: exactness identities differ")
+        resources = source["resources"]
+        if resources["complete_host_ceiling_bytes"] - resources["complete_host_peak_bytes"] != resources["complete_host_margin_bytes"]:
+            raise ArtifactError("C4: host margin does not reproduce")
+        if resources["whole_board_gpu_ceiling_bytes"] - resources["whole_board_gpu_peak_bytes"] != resources["whole_board_gpu_margin_bytes"]:
+            raise ArtifactError("C4: GPU margin does not reproduce")
+        return result
+    if claim_id == "C5":
+        observations = source["observations"]
+        values = source["timing"]
+        control_time = sum(row["control_cycle_seconds"] for row in observations)
+        candidate_time = sum(row["candidate_cycle_seconds"] for row in observations)
+        control_f1 = statistics.fmean(row["control_f1"] for row in observations)
+        candidate_f1 = statistics.fmean(row["candidate_f1"] for row in observations)
+        result = {"tasks": len(observations), "control_f1": control_f1, "candidate_f1": candidate_f1, "wall_reduction": 1 - candidate_time / control_time}
+        if not close(control_time, values["control_request_plus_reset_seconds"]) or not close(candidate_time, values["candidate_request_plus_reset_seconds"]):
+            raise ArtifactError("C5: population wall times do not reproduce")
+        if not close(control_f1, source["quality"]["control_mean_f1"]) or not close(candidate_f1, source["quality"]["candidate_mean_f1"]):
+            raise ArtifactError("C5: population F1 means do not reproduce")
+        if not close(result["wall_reduction"], values["reduction_fraction"]):
+            raise ArtifactError("C5: wall reduction does not reproduce")
+        return result
+    if claim_id == "C6":
+        observations = source["observations"]
+        values = source["timing"]
+        control_time = sum(row["control_cycle_seconds"] for row in observations)
+        candidate_time = sum(row["candidate_cycle_seconds"] for row in observations)
+        task_deltas = [statistics.fmean(row["candidate_f1"]) - statistics.fmean(row["control_f1"]) for row in observations]
+        result = {"tasks": len(observations), "wall_reduction": 1 - candidate_time / control_time, "f1_delta": statistics.fmean(task_deltas)}
+        if not close(control_time, values["control_request_plus_reset_seconds"]) or not close(candidate_time, values["candidate_request_plus_reset_seconds"]):
+            raise ArtifactError("C6: population wall times do not reproduce")
+        if not close(result["wall_reduction"], values["reduction_fraction"]) or not close(result["f1_delta"], source["quality"]["aggregate_eight_direction_f1_delta"]):
+            raise ArtifactError("C6: population summary does not reproduce")
+        return result
+    if claim_id == "C7":
+        observations = source["observations"]
+        result = source["result"]
+        totals = {
+            name: sum(row[name] for row in observations)
+            for name in (
+                "uncached_h2d_bytes", "cached_h2d_bytes",
+                "uncached_process_physical_read_bytes", "cached_process_physical_read_bytes",
+                "uncached_decode_nanoseconds", "cached_decode_nanoseconds",
+            )
+        }
+        replayed = {
+            "pairs": len(observations),
+            "h2d_reduction": 1 - totals["cached_h2d_bytes"] / totals["uncached_h2d_bytes"],
+            "physical_read_reduction": 1 - totals["cached_process_physical_read_bytes"] / totals["uncached_process_physical_read_bytes"],
+            "decode_reduction": 1 - totals["cached_decode_nanoseconds"] / totals["uncached_decode_nanoseconds"],
+        }
+        expected = (result["H2D_byte_reduction_fraction"], result["process_physical_read_reduction_fraction"], result["decode_wall_reduction_fraction"])
+        actual = (replayed["h2d_reduction"], replayed["physical_read_reduction"], replayed["decode_reduction"])
+        if not all(row["valid"] and len(row["logits_sha256"]) == 64 for row in observations) or not all(close(a, b) for a, b in zip(actual, expected)):
+            raise ArtifactError("C7: five-pair population summary does not reproduce")
+        return replayed
+    if claim_id == "C8":
+        ownership = source["ownership"]
+        lifecycle = source["lifecycle"]
+        return {"host_peak_reduction": 1 - ownership["bounded_source_complete_host_peak_bytes"] / ownership["control_complete_host_peak_bytes"], "balanced_submissions": lifecycle["submissions"] == lifecycle["completions"]}
+    if claim_id == "C9":
+        observations = source["observations"]
+        values = source["timing"]
+        qwen_total = sum(row["qwen3_next"]["completion_seconds"] for row in observations)
+        qwen_first = sum(row["qwen3_next"]["first_useful_action_seconds"] for row in observations)
+        resident_rows = [row["resident_qwen36_primary"] if row["resident_qwen36_primary"]["correct"] else row["resident_qwen36_format_aligned"] for row in observations]
+        if any(row is None or not row["correct"] for row in resident_rows):
+            raise ArtifactError("C9: no correct format-aligned resident result for a task")
+        resident_total = sum(row["completion_seconds"] for row in resident_rows)
+        resident_first = sum(row["first_useful_action_seconds"] for row in resident_rows)
+        result = {
+            "tasks": len(observations),
+            "total_wall_ratio": qwen_total / resident_total,
+            "first_action_ratio": qwen_first / resident_first,
+        }
+        expected_totals = (values["qwen3_next_total_process_seconds"], values["resident_qwen36_total_process_seconds"], values["qwen3_next_time_to_first_useful_action_seconds"], values["resident_qwen36_time_to_first_useful_action_seconds"])
+        if not all(close(a, b) for a, b in zip((qwen_total, resident_total, qwen_first, resident_first), expected_totals)):
+            raise ArtifactError("C9: task population totals do not reproduce")
+        if not close(result["total_wall_ratio"], values["total_process_ratio"]) or not close(result["first_action_ratio"], values["time_to_first_useful_action_ratio"]):
+            raise ArtifactError("C9: product ratios do not reproduce")
+        return result
+    if claim_id == "C10":
+        return {"outcome": source["outcome"], "fixed_history_exact": source["result"]["fixed_history_exact"], "lifecycle_balanced": source["result"]["lifecycle_balanced"]}
+    if claim_id == "C11":
+        population = source["task_population"]
+        placement = source["placement"]
+        admitted = sum(row["exact"] for row in population["observations"])
+        if admitted != population["admitted_cells"] or len(population["observations"]) != population["required_cells"]:
+            raise ArtifactError("C11: task-admission population does not reproduce")
+        if placement["usable_gpu_bytes"] - placement["predicted_all_in_gpu_bytes"] != placement["predicted_gpu_margin_bytes"]:
+            raise ArtifactError("C11: predicted GPU margin does not reproduce")
+        if placement["memory_event_deltas"] != 0 or placement["swap_peak_bytes"] != 0:
+            raise ArtifactError("C11: resource-event predicate failed")
+        return {"admitted_cells": admitted, "required_cells": population["required_cells"], "gpu_margin_mib": placement["gpu_margin_mib"]}
+    if claim_id == "C12":
+        lifecycle = source["lifecycle"]
+        return {"scheduled_objects": lifecycle["scheduled_objects_per_request"], "host_windows": lifecycle["managed_host_windows"], "gpu_slots": lifecycle["managed_gpu_slots"], "terminal_live_objects": lifecycle["terminal_live_objects"]}
+    raise ArtifactError(f"no replay implementation for {claim_id}")
+
+
+def replay_claim(claim_id: str) -> None:
+    verify_claim(claim_id, quiet=True)
+    result = {"C1": replay_c1, "C2": replay_c2, "C3": replay_c3}.get(claim_id, lambda: replay_compact(claim_id))()
+    print(f"PASS replay {claim_id}: {json.dumps(result, sort_keys=True)}")
+
+
+def manifest_entries() -> list[dict[str, Any]]:
+    excluded = {MANIFEST.resolve()}
+    entries = []
+    for path in sorted(item for item in ROOT.rglob("*") if item.is_file() and ".git" not in item.parts):
+        if path.resolve() in excluded:
+            continue
+        relative = path.relative_to(ROOT).as_posix()
+        entries.append({"path": relative, "bytes": path.stat().st_size, "sha256": sha256(path)})
+    return entries
+
+
+def handle_manifest(write: bool, check: bool) -> None:
+    current = {"schema_version": 1, "files": manifest_entries()}
+    if write:
+        MANIFEST.write_text(json.dumps(current, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(f"WROTE {MANIFEST.relative_to(ROOT)} with {len(current['files'])} files")
+    if check:
+        recorded = load_json(MANIFEST)
+        if recorded != current:
+            raise ArtifactError("artifact-manifest.json does not match the repository contents")
+        print(f"PASS manifest: {len(current['files'])} files")
+
+
+def parser() -> argparse.ArgumentParser:
+    root = argparse.ArgumentParser(description=__doc__)
+    commands = root.add_subparsers(dest="command", required=True)
+    for name in ("verify", "replay"):
+        command = commands.add_parser(name)
+        selection = command.add_mutually_exclusive_group(required=True)
+        selection.add_argument("--claim")
+        selection.add_argument("--all", action="store_true")
+    manifest = commands.add_parser("manifest")
+    selection = manifest.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--write", action="store_true")
+    selection.add_argument("--check", action="store_true")
+    return root
+
+
+def main() -> int:
+    arguments = parser().parse_args()
+    try:
+        if arguments.command in {"verify", "replay"}:
+            selected = claims_for(arguments.claim, arguments.all)
+            for claim_id in selected:
+                verify_claim(claim_id) if arguments.command == "verify" else replay_claim(claim_id)
+            if arguments.command == "verify" and arguments.all:
+                verify_source_manifest()
+        else:
+            handle_manifest(arguments.write, arguments.check)
+    except ArtifactError as exc:
+        print(f"FAIL: {exc}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,5 @@
+current_state = "README.md"
+authority = "claims/claim-ledger.json"
+content_manifest = "artifact-manifest.json"
+paper = "paper/preprint.pdf"
+release_contract = "ARTIFACT.md"

@@ -1,0 +1,8 @@
+{"claim":"C3","assertions":[
+  {"json_pointer":"/population/prespecified_cells","op":"eq","value":14},
+  {"json_pointer":"/population/valid_cells","op":"eq","value":14},
+  {"json_pointer":"/population/fatal_cells","op":"eq","value":7},
+  {"json_pointer":"/population/recoverable_cells","op":"eq","value":5},
+  {"json_pointer":"/population/control_cells","op":"eq","value":2},
+  {"source":"evidence/replay/C3/cell-certificates.json","json_pointer":"/cells","op":"len","value":14}
+]}

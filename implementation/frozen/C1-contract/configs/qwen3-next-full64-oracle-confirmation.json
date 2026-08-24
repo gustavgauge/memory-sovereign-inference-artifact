@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "decision_id": "qwen3-next-full64-oracle-confirmation",
+  "classification": "promotion",
+  "status": "FROZEN_FOR_ONE_TERMINAL_CONFIRMATION",
+  "decision_consumer": "replace the Qwen3-Next 32K+64 first-eight exactness limitation in paper claim C1 with a mechanically bound all-64 predicate if and only if the single prespecified comparison passes",
+  "objective": "Compare the immutable 32K+64 LRU64 product cell with one zero-cache, eight-window asynchronous oracle using the exact historical model, prompt, executable, backend libraries, graph, sampling, hardware, and resource contract.",
+  "stop_rule": "Execute exactly one full-output oracle cell. Preserve PASS, evidence-valid divergence, or INVALID. Do not tune, select another prompt, change the cache policy, replace the executable, or launch a descendant.",
+  "claim_boundary": "This contract can promote the exactness horizon of the one frozen Qwen3-Next 32K+64 capstone from eight to 64 generated outputs. It cannot establish a workload population, long-horizon stability, semantic quality, independent cache-policy value, race freedom, general fault tolerance, or hardware/model generality.",
+  "candidate_product_cell": {
+    "role": "immutable complete eight-window asynchronous component with per-layer LRU64; not rerun",
+    "root": "/data/ai/runs/memory-sovereign-inference/20260819T-qwen3-next-thin-vertical-development/product-point-32768-lru64-64",
+    "result": {
+      "path": "/data/ai/runs/memory-sovereign-inference/20260819T-qwen3-next-thin-vertical-development/product-point-32768-lru64-64/result.json",
+      "sha256": "4562a316a3a1c6564e5a53b756d57c18c5a231e279841690b266001939ed7b79"
+    },
+    "logits": {
+      "path": "/data/ai/runs/memory-sovereign-inference/20260819T-qwen3-next-thin-vertical-development/product-point-32768-lru64-64/logits.bin",
+      "sha256": "04a4feb81f6274c47d720131f94f18f70439d8e434451750fcac17a493306e66"
+    },
+    "certificate": {
+      "path": "/data/ai/runs/memory-sovereign-inference/20260819T-qwen3-next-thin-vertical-development/product-point-32768-lru64-64/certificate.json",
+      "sha256": "e6281c341c764071b97036938928713a283ca39a4a675354f43216a274ea82f8"
+    },
+    "resource": {
+      "path": "/data/ai/runs/memory-sovereign-inference/20260819T-qwen3-next-thin-vertical-development/product-point-32768-lru64-64/resource-summary.json",
+      "sha256": "c1395ab8c13a28cfe7c66b17f1def0b2bcdc33045ff74722248da25e6f6f4a51"
+    },
+    "launch_control": {
+      "path": "/data/ai/runs/memory-sovereign-inference/20260819T-qwen3-next-thin-vertical-development/product-point-32768-lru64-64/launch-control.json",
+      "sha256": "fe762a1917cecc2677f9300f03d79c5f1d36c5852c86bf10e1e5c2ec9771f112"
+    }
+  },
+  "historical_first8_oracle": {
+    "role": "immutable zero-cache 32K+8 predecessor used only to verify unchanged prefix semantics; not a repetition and not the full-output result",
+    "result": {
+      "path": "/data/ai/runs/memory-sovereign-inference/20260819T-qwen3-next-thin-vertical-development/prefill-32768-ubatch4096/result.json",
+      "sha256": "e8efe715613e58de11b149bad8d7464345266b2c740b8068abfd9263723334dc"
+    },
+    "logits": {
+      "path": "/data/ai/runs/memory-sovereign-inference/20260819T-qwen3-next-thin-vertical-development/prefill-32768-ubatch4096/logits.bin",
+      "sha256": "2954c8b79f67d03d6ff6f10b27d5f29d8d1563ca429151a9f1b2abd400503be4"
+    },
+    "certificate": {
+      "path": "/data/ai/runs/memory-sovereign-inference/20260819T-qwen3-next-thin-vertical-development/prefill-32768-ubatch4096/certificate.json",
+      "sha256": "0dccabc0600c525e7dcb14e843699c63f98393446313d8fe012afbb41fbec072"
+    }
+  },
+  "separate_evidence": {
+    "source_path_canary": {
+      "role": "separate 256+8 synchronous-source versus O_DIRECT canary; not part of the 32K+64 denominator",
+      "certificate_path": "/data/ai/runs/memory-sovereign-inference/20260819T-qwen3-next-thin-vertical-development/canary-control/certificate.json",
+      "certificate_sha256": "fe71795b022764a73c39fa0956f4d879f8f6db59d4326381209f88a191e8ad3e"
+    },
+    "full128_population": {
+      "role": "separate 8K+128 matched-source population with another prompt, fixed-horizon sampling, and successor executable; not a comparator or repetition for this cell",
+      "result_path": "evidence/results/qwen3-next-matched-control-churn-narrowed-breakthrough-20260820.json",
+      "result_sha256": "d03b1b254929b87c01cfd6471df26ea6b3e706f96bca7602ed0deb7570a34f04"
+    }
+  },
+  "model": {
+    "path": "/data/ai/models/gguf/qwen3-next-80b-a3b-instruct/Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf",
+    "bytes": 48410988384,
+    "sha256": "d103b2733ec1012a52d01edda66b7e5c24ae50508c9f99f5297ea459ef3c061a",
+    "canonical_tensor_payload_bytes": 48405005312,
+    "managed_expert_inventory_bytes": 46808432640
+  },
+  "runtime": {
+    "historical_project_commit": "70bc7203d92b74e48aa01dbd5700f24ef06ff301",
+    "historical_project_worktree": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-full64-oracle-20260820",
+    "base_commit": "8ef78e644f559db4e8716b59bf76b8e11619337d",
+    "adapter_commit": "7206605099424f7ad7ca78c2783a60ec60f810f4",
+    "runtime_worktree": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-llama",
+    "backend_dir": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-llama/build-msi-sm86/bin",
+    "binary": {
+      "path": "/data/ai/runs/memory-sovereign-inference/20260819T-qwen3-next-thin-vertical-development/bin/qwen3-next-plan-runtime-adapter",
+      "bytes": 430832,
+      "sha256": "4c68fc99e72c23c23870db141952c4f5911532effa4f0a384ab6e82b3eadca30"
+    },
+    "backend_libraries": [
+      {"path": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-llama/build-msi-sm86/bin/libllama.so.0", "sha256": "32e37a9e0cd394a4d8ff6eadd0510561230c3c1418e519d33992b5dceb377f33"},
+      {"path": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-llama/build-msi-sm86/bin/libggml.so.0", "sha256": "fa975e43dd32687204d30b2fa67e40ac73e34eadee581ac2528d9d938a2ff841"},
+      {"path": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-llama/build-msi-sm86/bin/libggml-base.so.0", "sha256": "a6263d8e3a9d33ff2eedf4f2ef95190ccd791a389beaefc16777a48223b7538d"},
+      {"path": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-llama/build-msi-sm86/bin/libggml-cpu.so.0", "sha256": "e2dacb8ceeb9efecfd8a6798ab834b260425d1944b2389e2671763bd556e461a"},
+      {"path": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-llama/build-msi-sm86/bin/libggml-cuda.so.0", "sha256": "5d900f6b2f5299ff885cdec92ec13442af3225536bbec50d4f42fb174aa27584"}
+    ],
+    "historical_sources": [
+      {"path": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-full64-oracle-20260820/src/adapters/qwen3_next_plan_runtime_adapter.cpp", "sha256": "ca637a7c84e336862273f98e2334529df1082fee97f4e0f5f6bf2ea1893e5bdb"},
+      {"path": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-full64-oracle-20260820/tools/observe_qwen3_next_plan_consumer.py", "sha256": "36a30a1860375dc13c2ea2bcd2da720ad0a6d098a33b4398e1f7bca31022d8fb"},
+      {"path": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-full64-oracle-20260820/tools/run_qwen3_next_bounded_cell.sh", "sha256": "b7973f298aa8ef36c8c966b9ed0f7128ef6531f038c6783ac82a1ca70b1c1032"},
+      {"path": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-full64-oracle-20260820/tools/validate_qwen3_next_canary.py", "sha256": "b5e60a81b8082017ef9d512703232814358be774214c6ce4dcc29f07194b6007"},
+      {"path": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-full64-oracle-20260820/tools/validate_qwen3_next_cell.py", "sha256": "68316b3813d04b6d7490328d2c7fe8a451142221645cd6f227a48c3307476519"}
+    ]
+  },
+  "hardware": {
+    "gpu_index": 0,
+    "gpu_product": "NVIDIA GeForce RTX 3090",
+    "gpu_uuid": "GPU-38bca229-3688-c0be-cbdc-c24bfedbddce",
+    "physical_board_bytes": 25769803776,
+    "gpu_board_budget_bytes": 24696061952,
+    "host_cgroup_max_bytes": 11811160064,
+    "host_cgroup_swap_max_bytes": 0,
+    "minimum_host_margin_bytes": 536870912,
+    "minimum_gpu_margin_bytes": 536870912,
+    "required_foreign_compute_pids": []
+  },
+  "workload": {
+    "prompt_path": "/data/ai/runs/memory-sovereign-inference/20260819T-qwen3-next-thin-vertical-development/inputs/heldout-code-x4.txt",
+    "prompt_bytes": 327508,
+    "prompt_sha256": "c9b183f5dfb02a330fba524a2fb28d5d8c8c9fa74115afa5cbcf8075767904f2",
+    "prompt_formatter": "official_qwen3_next_one_user_no_tools_thinking_disabled_expansion",
+    "prompt_tokens": 32768,
+    "output_tokens": 64,
+    "vocabulary_size": 151936,
+    "logit_dtype": "native float32 byte rows",
+    "n_ubatch": 4096,
+    "n_gpu_layers": 99,
+    "use_mmap": false,
+    "sampling": "one greedy chain; ordinary EOG stopping; no seed or sampling draw",
+    "candidate_cache": {"policy": "per_layer_lru", "capacity_per_layer": 64},
+    "oracle_cache": {"policy": "disabled", "capacity_per_layer": 0},
+    "source": {"bounded": true, "direct_io": true, "in_flight": 8}
+  },
+  "correctness_predicates": {
+    "tokens": "ordered equality of all 64 generated token IDs",
+    "logits": "for each of 64 generation steps, byte-for-byte equality of the complete 151,936-element native float32 logit row; equivalently equal 607,744-byte row SHA-256 digests and equal whole-file SHA-256",
+    "routes": "ordered JSON equality of every recorded prefill and decode route event, including chunk, step, layer, token count, and selected_unique expert sequence",
+    "response": "byte-identical decoded response string",
+    "destination": "exact equality of the recorded model-memory destination identity",
+    "hybrid_rebased_state": "not recorded by this historical Qwen3-Next harness and not part of paper claim C1; no state-exactness claim is authorized"
+  },
+  "resource_and_lifecycle_predicates": {
+    "host": "complete research-job cgroup peak no higher than host max minus minimum host margin; zero swap and zero max/OOM event deltas",
+    "gpu": "whole-board observed peak no higher than GPU board budget minus minimum GPU margin; exact UUID/product and zero foreign compute PIDs",
+    "demand_coverage": "all eight prefill chunks contain exactly 48 layer events and every prefill event demands all 512 experts",
+    "source": "eight registered direct windows; submissions equal completions; H2D issued equals completed; zero failures/rejections/active tickets; all windows free",
+    "plan_gpu_slots": "bindings, readiness, consumer acquire/completion, slot release, and window recycle counts balance; zero bound/ready/live-consumer state before shutdown; one reset and one shutdown"
+  },
+  "applicable_fail_closed_audit": {
+    "role": "inherited adjacent evidence only; the exact historical product executable has no fault hooks, so this confirmation re-audits clean closure but does not rerun or attribute successor-binary fault injections to it",
+    "config_path": "configs/qwen3-next-integrated-fault-campaign.json",
+    "config_sha256": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276",
+    "terminal_result_path": "evidence/results/paper-essential-program-northstar-breakthrough-20260820.json",
+    "terminal_result_sha256": "a0e6031f9d9d8514d3190fd8dac601dec8a8a547ff7c3d1af0d6831500b75bc1",
+    "successor_binary_sha256": "5083ccd5b1fafc2468c1211401244366f0347e3671d3e3325ad602c9f56296ce",
+    "named_qwen_cells": ["none", "short_read", "eio", "out_of_order", "stale_completion", "wrong_object", "held_consumer", "reset_outstanding", "shutdown_live_consumer", "partial_bundle"]
+  },
+  "execution": {
+    "arm": "plan_staged_candidate",
+    "expected_runtime_seconds": 120,
+    "maximum_runtime_seconds": 600,
+    "maximum_physical_source_bytes": 500000000000,
+    "observer_interval_seconds": 0.05,
+    "research_job_stage_key": "qwen3-next-full64-oracle-confirmation",
+    "repetition_rule": "one material zero-cache oracle; no outcome-selected repetition"
+  },
+  "validation": {
+    "source_path": "tools/validate_qwen3_next_full64_oracle.py",
+    "source_sha256": "4842faff0e3c1b440017d24aaa06c2d02ee78d93d642d6ff8979c3e7d97166c5"
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "artifact": "Sanitized merged certificates for the fourteen prespecified transition cells",
+  "population_definition": "One outcome-blind execution of every prespecified named cell; the cells are transition tests, not reliability samples.",
+  "cells": [
+    {
+      "model": "Qwen3-Next",
+      "cell": "00-none",
+      "fault": "none",
+      "class": "control",
+      "valid": true,
+      "checks": {"fault_not_triggered": true, "eight_outputs": true, "lifecycle_closed": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276", "control_logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "resource": "0fa9c1c6e44317a8316eb2d3fc9ffbe54b30dd3690d6a817069e874c917af3ec", "result": "a989680a73ee13dea9fda2f6827d6913be760443ef64fd0b2ebab611407e74d1"}
+    },
+    {
+      "model": "Qwen3-Next",
+      "cell": "01-short_read",
+      "fault": "short_read",
+      "class": "fatal",
+      "valid": true,
+      "checks": {"fatal_classified": true, "fault_triggered": true, "zero_generated_tokens": true, "zero_logits": true, "zero_accepted_after_fault": true, "no_invalid_publication": true, "source_drained": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276", "control_logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "logits": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "resource": "43f1ae5d979a9dcfac526ab76668b8fb4e0dd9b24dd825b1da1253c0f135c609", "result": "1ae98146614b00d6829caadb8795e272013844dfb5abcc8dde9c1ac1ff60759e"}
+    },
+    {
+      "model": "Qwen3-Next",
+      "cell": "02-eio",
+      "fault": "eio",
+      "class": "fatal",
+      "valid": true,
+      "checks": {"fatal_classified": true, "fault_triggered": true, "zero_generated_tokens": true, "zero_logits": true, "zero_accepted_after_fault": true, "no_invalid_publication": true, "source_drained": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276", "control_logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "logits": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "resource": "a687ff59982b96bb634fa045c149ab8a8826e14a349f81dc9e5894b9a6192d6e", "result": "91efa17d3a90dbb7095de706d905745a73904572bc467dcb8b6b44b329469334"}
+    },
+    {
+      "model": "Qwen3-Next",
+      "cell": "03-out_of_order",
+      "fault": "out_of_order",
+      "class": "recoverable",
+      "valid": true,
+      "checks": {"recoverable_classified": true, "fault_triggered": true, "exact_logits": true, "exact_tokens": true, "exact_routes": true, "exact_source_state": true, "lifecycle_closed": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276", "control_logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "resource": "14728763cd3deb1ebeb5d793bc288b26e3e2b2c062a57d8391b5b492c4c4ea95", "result": "b915ec97056e8c1a7e3cd9dff7dc2c1c28f6a58bd3068ea9ac1e43b428679458"}
+    },
+    {
+      "model": "Qwen3-Next",
+      "cell": "04-stale_completion",
+      "fault": "stale_completion",
+      "class": "fatal",
+      "valid": true,
+      "checks": {"fatal_classified": true, "fault_triggered": true, "zero_generated_tokens": true, "zero_logits": true, "zero_accepted_after_fault": true, "no_invalid_publication": true, "source_drained": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276", "control_logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "logits": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "resource": "6731c513d90cdb9658a2bfc7327509f1ce6078759b066af9e0458f68e7041dbe", "result": "a7a8e4a8115180c660de220ae74efcd43088e11b5ea082dc458727d516d10486"}
+    },
+    {
+      "model": "Qwen3-Next",
+      "cell": "05-wrong_object",
+      "fault": "wrong_object",
+      "class": "fatal",
+      "valid": true,
+      "checks": {"fatal_classified": true, "fault_triggered": true, "zero_generated_tokens": true, "zero_logits": true, "zero_accepted_after_fault": true, "no_invalid_publication": true, "source_drained": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276", "control_logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "logits": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "resource": "7cae852965e25e9f5dd79b82a19b113c1891214d8a2e67eba75f378da2c92804", "result": "8f89d53fe081d1aa12b2be719be152688dbb226d2eca2d6cdc0a75c309aaf5c4"}
+    },
+    {
+      "model": "Qwen3-Next",
+      "cell": "06-held_consumer",
+      "fault": "held_consumer",
+      "class": "recoverable",
+      "valid": true,
+      "checks": {"recoverable_classified": true, "fault_triggered": true, "exact_logits": true, "exact_tokens": true, "exact_routes": true, "exact_source_state": true, "lifecycle_closed": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276", "control_logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "resource": "9a04e9245584f2d4368f895f1fcb42883016906ec91493e314a538ace2983f08", "result": "9ca445f6707f16d11c7cbee9bb0947c37e0784885e0d432ae21f16751af9485e"}
+    },
+    {
+      "model": "Qwen3-Next",
+      "cell": "07-reset_outstanding",
+      "fault": "reset_outstanding",
+      "class": "recoverable",
+      "valid": true,
+      "checks": {"recoverable_classified": true, "fault_triggered": true, "exact_logits": true, "exact_tokens": true, "exact_routes": true, "exact_source_state": true, "lifecycle_closed": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276", "control_logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "resource": "a3106a72b8c94ce196c0a4473dbe50f644196e55cb4a46f201b926d85f16a536", "result": "7c1797c963b1c2ed51bcb46cbb2907ab3e0e3b714e6bf94445e51fca5c744087"}
+    },
+    {
+      "model": "Qwen3-Next",
+      "cell": "08-shutdown_live_consumer",
+      "fault": "shutdown_live_consumer",
+      "class": "recoverable",
+      "valid": true,
+      "checks": {"recoverable_classified": true, "fault_triggered": true, "exact_logits": true, "exact_tokens": true, "exact_routes": true, "exact_source_state": true, "lifecycle_closed": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276", "control_logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "resource": "a49f4dd83d0bb04d0abfc43b1ede6e8504da52865bce7c68d751ac4747d55ddc", "result": "e2b0c1a3439b2abbe50c59081f8bc50e3ca4b7126e5ab9e8aab19b2df65017c8"}
+    },
+    {
+      "model": "Qwen3-Next",
+      "cell": "09-partial_bundle",
+      "fault": "partial_bundle",
+      "class": "fatal",
+      "valid": true,
+      "checks": {"fatal_classified": true, "fault_triggered": true, "zero_generated_tokens": true, "zero_logits": true, "zero_accepted_after_fault": true, "no_invalid_publication": true, "source_drained": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276", "control_logits": "625c989ec0ea5f4b1c863848d8a097cfd85bcc7f46f3edf6fa86aa2aedf5fb4d", "logits": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "resource": "be4325e10d5dcce3d22f9e87a81a3157b00790e1cd57a9e58f176e05920a22fa", "result": "bb66399bfbed6efb7c06783368495880998ab2f8fa733dea7b5fbd2669fa19dc"}
+    },
+    {
+      "model": "Gemma 4",
+      "cell": "00-none",
+      "fault": "none",
+      "class": "control",
+      "valid": true,
+      "checks": {"fault_not_triggered": true, "eight_outputs": true, "lifecycle_closed": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "34284ba117ccae8ff694641d998b42b3db47622fb6b8285b574e7ec2ec7631d0", "control_logits": "be49e75bc2965fba2541cc0c8ef57cdd549ba1b791efd342d8c8df270c6ac96c", "logits": "be49e75bc2965fba2541cc0c8ef57cdd549ba1b791efd342d8c8df270c6ac96c", "resource": "1bae45baa51b78d48f27fe66d3a21e0f74b4523c86032efe7ddb6b4975bf9cb8", "result": "ffc925bd4c825e466cf475a843bf636c2b74c6271ad4d0c99697b2f3b9d412fe"}
+    },
+    {
+      "model": "Gemma 4",
+      "cell": "01-short_read",
+      "fault": "short_read",
+      "class": "fatal",
+      "valid": true,
+      "checks": {"fatal_classified": true, "fault_triggered": true, "zero_generated_tokens": true, "zero_logits": true, "zero_accepted_after_fault": true, "no_invalid_publication": true, "source_drained": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "34284ba117ccae8ff694641d998b42b3db47622fb6b8285b574e7ec2ec7631d0", "control_logits": "be49e75bc2965fba2541cc0c8ef57cdd549ba1b791efd342d8c8df270c6ac96c", "logits": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "resource": "9ee9e6e4748e82731a8139cb5c20fb1d806f97c55ddd9dd38ddaee45734c4fd1", "result": "f40d5a2225e78a3944b7eeea250bade0b4e04ecd06ba3173a2e5091706a2a3db"}
+    },
+    {
+      "model": "Gemma 4",
+      "cell": "02-stale_completion",
+      "fault": "stale_completion",
+      "class": "fatal",
+      "valid": true,
+      "checks": {"fatal_classified": true, "fault_triggered": true, "zero_generated_tokens": true, "zero_logits": true, "zero_accepted_after_fault": true, "no_invalid_publication": true, "source_drained": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "34284ba117ccae8ff694641d998b42b3db47622fb6b8285b574e7ec2ec7631d0", "control_logits": "be49e75bc2965fba2541cc0c8ef57cdd549ba1b791efd342d8c8df270c6ac96c", "logits": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "resource": "8de15fefb8315ee780945ca3aec58cd12f5e7bbcb60aa093e23fa545f859857c", "result": "dc4179e1a1fe6cca9f7b73a38077fbd4889bc68853a68a1ab7f605c82f00d8b6"}
+    },
+    {
+      "model": "Gemma 4",
+      "cell": "03-held_consumer",
+      "fault": "held_consumer",
+      "class": "recoverable",
+      "valid": true,
+      "checks": {"recoverable_classified": true, "fault_triggered": true, "exact_logits": true, "exact_tokens": true, "exact_routes": true, "exact_source_state": true, "lifecycle_closed": true, "real_consumer": true, "workload_shape": true, "zero_cache": true, "resource_predicates": true},
+      "input_sha256": {"config": "34284ba117ccae8ff694641d998b42b3db47622fb6b8285b574e7ec2ec7631d0", "control_logits": "be49e75bc2965fba2541cc0c8ef57cdd549ba1b791efd342d8c8df270c6ac96c", "logits": "be49e75bc2965fba2541cc0c8ef57cdd549ba1b791efd342d8c8df270c6ac96c", "resource": "9f365b5aa49836d1d9cc9276f25c33818827e66de9e9b104800a14208cddfb42", "result": "741f2be6d5915837056b816c02039f804fc7449fbaba13a5ef61d46e9f2674be"}
+    }
+  ]
+}

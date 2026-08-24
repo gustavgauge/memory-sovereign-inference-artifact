@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "claim_id": "C8",
+  "title": "Bounded Gemma direct source",
+  "exactness": {"complete_logits_equal": true, "token_ids_equal": true, "route_trace_equal": true, "same_final_binary": true},
+  "ownership": {"control_complete_host_peak_bytes": 6641348608, "bounded_source_complete_host_peak_bytes": 2980458496, "peak_reduction_percent": 55.12269161101082},
+  "lifecycle": {"submissions": 14396, "completions": 14396, "peak_in_flight": 8, "free_windows_at_shutdown": 8, "balanced": true},
+  "scope": "One fixed Gemma request on one RTX 3080 Ti system identity.",
+  "provenance": {"result_record_sha256": "230adde8c7f6ac91f28deb0ab2d480f84a5f6db2ea258861a4374b36b04781f8"}
+}

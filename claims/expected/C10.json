@@ -1,0 +1,5 @@
+{"claim":"C10","assertions":[
+  {"json_pointer":"/outcome","op":"eq","value":"prespecified criterion failed"},
+  {"json_pointer":"/result/fixed_history_exact","op":"eq","value":true},
+  {"json_pointer":"/result/lifecycle_balanced","op":"eq","value":true}
+]}

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "claim_id": "C12",
+  "title": "Shared-Plan execution parity",
+  "exactness": {"worker_validations_passed": true, "token_ids_sha256": "152f57d71cdac482e00db788980abcd49a6a150ea853950250aa8669ffdbc3ea"},
+  "lifecycle": {"scheduled_objects_per_request": 3384, "managed_host_windows": 144, "managed_gpu_slots": 8, "requests_completed": 2, "terminal_live_objects": 0, "free_windows_after_shutdown": 144},
+  "resources": {"host_memory_limit_bytes": 6442450944, "host_memory_peak_bytes": 5013585920, "gpu_margin_bytes": 590807040, "memory_event_deltas": 0},
+  "scope": "One fixed 8,192+32 execution-parity process; not a utility or cross-workload result.",
+  "provenance": {"result_record_sha256": "b03bd923dfcebfad5c53840d9644166f18fe33368004e39bacdeebdda5e7626c"}
+}

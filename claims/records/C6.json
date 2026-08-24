@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "claim_id": "C6",
+  "title": "Shared-Plan comparison with preserved F1 miss",
+  "observations": [
+    {"task": "narrativeqa", "execution_order": ["control", "candidate"], "control_cycle_seconds": 40.128348172, "candidate_cycle_seconds": 29.823366699, "control_f1": [0.26666666666666666, 0.4], "candidate_f1": [0.26666666666666666, 0.4]},
+    {"task": "qasper", "execution_order": ["candidate", "control"], "control_cycle_seconds": 48.336530268, "candidate_cycle_seconds": 38.556359061, "control_f1": [0.09756097560975609, 0.09756097560975609], "candidate_f1": [0.09756097560975609, 0.09756097560975609]},
+    {"task": "multifieldqa_en", "execution_order": ["candidate", "control"], "control_cycle_seconds": 46.597579258, "candidate_cycle_seconds": 35.356214497, "control_f1": [0.47058823529411764, 0.47058823529411764], "candidate_f1": [0.47058823529411764, 0.47058823529411764]},
+    {"task": "hotpotqa", "execution_order": ["control", "candidate"], "control_cycle_seconds": 39.058844967, "candidate_cycle_seconds": 28.315337787, "control_f1": [1.0, 1.0], "candidate_f1": [1.0, 1.0]},
+    {"task": "2wikimqa-1", "execution_order": ["control", "candidate"], "control_cycle_seconds": 38.410001358, "candidate_cycle_seconds": 25.372916732, "control_f1": [1.0, 1.0], "candidate_f1": [1.0, 1.0]},
+    {"task": "2wikimqa-2", "execution_order": ["candidate", "control"], "control_cycle_seconds": 48.297776958, "candidate_cycle_seconds": 39.467486913, "control_f1": [0.125, 0.1], "candidate_f1": [0.1, 0.1]},
+    {"task": "musique-1", "execution_order": ["candidate", "control"], "control_cycle_seconds": 36.855218678, "candidate_cycle_seconds": 26.216567519, "control_f1": [0.5, 0.5], "candidate_f1": [0.5, 0.5]},
+    {"task": "musique-2", "execution_order": ["control", "candidate"], "control_cycle_seconds": 37.715260562, "candidate_cycle_seconds": 27.676902528, "control_f1": [0.0, 0.0], "candidate_f1": [0.0, 0.0]}
+  ],
+  "timing": {"control_request_plus_reset_seconds": 335.399560221, "candidate_request_plus_reset_seconds": 250.785151736, "reduction_fraction": 0.25227942585627205},
+  "quality": {"aggregate_eight_direction_f1_delta": -0.0015625, "prespecified_f1_criterion": "failed", "mechanism_attributable_regression_established": false},
+  "scope": "The prespecified zero-margin F1 criterion remains failed; the result does not reclassify or erase that miss.",
+  "provenance": {"result_record_sha256": "54bb2f025bd78816d8833f9d638c48452bc03ddfaa1894f4b0959ce83109dbd7"}
+}

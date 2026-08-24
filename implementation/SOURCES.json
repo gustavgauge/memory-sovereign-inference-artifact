@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "content_manifest": "implementation/source-manifest.json",
+  "export_policy": "Claim-bearing source snapshots exported from the recorded commits into a repository with independent Git history.",
+  "publication_transform": {
+    "omitted": "Unrelated experiment configurations and non-claim-bearing branch-provenance files.",
+    "effect": "Claim-bearing source, contract, binary, adapter, and content identities are retained."
+  },
+  "snapshots": [
+    {
+      "name": "C1",
+      "role": "Qwen3-Next 32K+64 exactness execution",
+      "project_commit": "70bc7203d92b74e48aa01dbd5700f24ef06ff301",
+      "path": "implementation/frozen/C1"
+    },
+    {
+      "name": "C1-contract",
+      "role": "one-shot full64 oracle contract and validator",
+      "project_commit": "39a8f3fc99033cf4e82ec554b2481518605ab1da",
+      "path": "implementation/frozen/C1-contract"
+    },
+    {
+      "name": "C2",
+      "role": "Qwen3-Next matched direct/asynchronous component campaign",
+      "project_commit": "e495ac509c48f04831ca777d0c9f8f5eafd209a6",
+      "path": "implementation/frozen/C2"
+    },
+    {
+      "name": "C3-qwen",
+      "role": "Qwen3-Next named-transition campaign",
+      "project_commit": "4637a2aa099ed355165ad4df2ad5d7eb7974daa1",
+      "path": "implementation/frozen/C3-qwen"
+    },
+    {
+      "name": "C3-gemma",
+      "role": "Gemma named-transition campaign",
+      "project_commit": "8902d3c359989f618bb8b5033808b8b00aab346e",
+      "path": "implementation/frozen/C3-gemma"
+    }
+  ]
+}

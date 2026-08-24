@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "upstream_repository": "https://github.com/ggml-org/llama.cpp.git",
+  "upstream_commit": "40d5358d3c730b81729ba81cd5c44ed596d02510",
+  "adapter_commit": "05f332a0b031aa18041622e26f37e6a7c1fe82f0",
+  "patch": "runtime/gemma4/patches/0001-Add-Gemma-streamed-expert-destination-hook.patch",
+  "patch_sha256": "ec057bba93107c151a82291f0f9bc6642d66fab03a5021f8a6ff19f0b5241065",
+  "evidence_binary_sha256": {
+    "C3": "a01ea93148235539bd0cb5c7374e189e94364f19c4fc21fe8559a2e97420f371"
+  },
+  "boundary": "The patch reconstructs source. A rebuilt binary is portable reconstruction unless its complete binary and library identities match the frozen evidence identity."
+}

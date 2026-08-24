@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "claim_id": "C5",
+  "title": "Qwen-specific natural-task utility",
+  "population": {"control_processes": 8, "candidate_processes": 8},
+  "observations": [
+    {"task": "narrativeqa", "execution_order": ["control", "candidate"], "control_cycle_seconds": 38.714308853, "candidate_cycle_seconds": 28.360698227, "control_f1": 0.0, "candidate_f1": 0.0, "control_tokens": 20, "candidate_tokens": 24},
+    {"task": "qasper", "execution_order": ["candidate", "control"], "control_cycle_seconds": 47.761079913, "candidate_cycle_seconds": 36.900644065, "control_f1": 0.7272727272727274, "candidate_f1": 0.7272727272727274, "control_tokens": 60, "candidate_tokens": 60},
+    {"task": "multifieldqa_en", "execution_order": ["candidate", "control"], "control_cycle_seconds": 48.456018684, "candidate_cycle_seconds": 37.56275042, "control_f1": 1.0, "candidate_f1": 1.0, "control_tokens": 56, "candidate_tokens": 56},
+    {"task": "hotpotqa", "execution_order": ["control", "candidate"], "control_cycle_seconds": 36.648692157, "candidate_cycle_seconds": 26.350933108, "control_f1": 1.0, "candidate_f1": 1.0, "control_tokens": 6, "candidate_tokens": 6},
+    {"task": "2wikimqa-1", "execution_order": ["control", "candidate"], "control_cycle_seconds": 39.995782659, "candidate_cycle_seconds": 27.431447158, "control_f1": 0.0, "candidate_f1": 0.0, "control_tokens": 14, "candidate_tokens": 14},
+    {"task": "2wikimqa-2", "execution_order": ["candidate", "control"], "control_cycle_seconds": 42.893568479, "candidate_cycle_seconds": 27.332489104, "control_f1": 1.0, "candidate_f1": 1.0, "control_tokens": 20, "candidate_tokens": 20},
+    {"task": "musique-1", "execution_order": ["candidate", "control"], "control_cycle_seconds": 38.406014757, "candidate_cycle_seconds": 25.54961826, "control_f1": 0.5, "candidate_f1": 0.5, "control_tokens": 8, "candidate_tokens": 8},
+    {"task": "musique-2", "execution_order": ["control", "candidate"], "control_cycle_seconds": 39.008602487, "candidate_cycle_seconds": 26.427979609, "control_f1": 0.5, "candidate_f1": 0.5, "control_tokens": 8, "candidate_tokens": 8}
+  ],
+  "quality": {"control_mean_f1": 0.5909090909090909, "candidate_mean_f1": 0.5909090909090909},
+  "timing": {"control_request_plus_reset_seconds": 331.884067989, "candidate_request_plus_reset_seconds": 235.916559951, "reduction_fraction": 0.2891597316481632},
+  "scope": "Benchmark-semantic equality on the fixed eight-task population; not token identity or cross-task generalization.",
+  "provenance": {"result_record_sha256": "2d7ca95eb1d326f5302b61a13ed896c622e7530aa1783bda2d6b7b13d85c77c1"}
+}

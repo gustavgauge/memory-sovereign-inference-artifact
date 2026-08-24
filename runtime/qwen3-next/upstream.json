@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "upstream_repository": "https://github.com/ggml-org/llama.cpp.git",
+  "upstream_commit": "8ef78e644f559db4e8716b59bf76b8e11619337d",
+  "adapter_commit": "7206605099424f7ad7ca78c2783a60ec60f810f4",
+  "patch": "runtime/qwen3-next/patches/0001-Add-Qwen3-Next-streamed-expert-destination-hook.patch",
+  "patch_sha256": "8461b1ed128cacd24946b4f3b2c9b5597886305ec9c21b46d38d98074d18e982",
+  "evidence_binary_sha256": {
+    "C1": "4c68fc99e72c23c23870db141952c4f5911532effa4f0a384ab6e82b3eadca30",
+    "C2": "7bd52530b6ade92b6f2e25f9c6783fa0e7f4f05d164a12cc33ad692d444be9af",
+    "C3": "5083ccd5e3e629b4f69658b5f4dbfce6f07b211209bfb88a075700d0a89d0eb7"
+  },
+  "boundary": "The patch reconstructs source. A rebuilt binary is portable reconstruction unless its complete binary and library identities match the frozen evidence identity."
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "recorded_qwen_rtx3090_execution": {
+    "nvidia_driver": "580.159.03",
+    "cuda_toolkit": "13.0",
+    "nvcc": "13.0.88",
+    "llama_cpp_upstream_commit": "8ef78e644f559db4e8716b59bf76b8e11619337d"
+  },
+  "cutoff": "2026-08-21",
+  "boundary": "This is the driver and toolkit identity for the principal recorded executions. Evidence-producing binaries are separately identified by SHA-256."
+}

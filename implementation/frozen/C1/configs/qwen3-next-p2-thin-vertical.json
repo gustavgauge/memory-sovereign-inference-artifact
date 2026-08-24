@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "classification": "decision-bearing",
+  "decision_consumer": "source-aware-consumer-selection",
+  "work_unit": "qwen3-next-p2-thin-vertical",
+  "objective": "Determine whether target-only Qwen3-Next-80B-A3B can enter a voluntarily usable aggregate-nonresident P2 regime on the local RTX 3090 before material cache engineering.",
+  "ambition_contract": {
+    "objective_class": "breakthrough",
+    "target_discontinuity": "A real aggregate-nonresident 80B target with exact native execution, credible 32K prefill, and a trace-grounded implementable decode bound of at least 5 output tokens/s; 7-10 output tokens/s is strong product-vertical evidence.",
+    "benchmark_role": "The thin vertical is a decision gate, not the product goal.",
+    "search_freedom": "Local optimization, a minimal cache, and a separately scoped layer-major prefill redesign are allowed when trace evidence earns them.",
+    "closure_standard": "A valid implementable bound below 3 output tokens/s with no cheap material capability signal closes only this runtime, representation, and schedule. A chunk-major prefill cliff does not close a layer-major successor."
+  },
+  "artifact": {
+    "repository": "Qwen/Qwen3-Next-80B-A3B-Instruct-GGUF",
+    "revision": "4c8630cf7af926a9c5095cb4bbbbc65d36e20f77",
+    "filename": "Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf",
+    "path": "/data/ai/models/gguf/qwen3-next-80b-a3b-instruct/Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf",
+    "bytes": 48410988384,
+    "sha256": "d103b2733ec1012a52d01edda66b7e5c24ae50508c9f99f5297ea459ef3c061a",
+    "managed_expert_inventory_bytes": 46808432640,
+    "execution_time_conversion": false
+  },
+  "runtime": {
+    "upstream": "https://github.com/ggml-org/llama.cpp.git",
+    "base_commit": "8ef78e644f559db4e8716b59bf76b8e11619337d",
+    "adapter_commit": "7206605099424f7ad7ca78c2783a60ec60f810f4",
+    "private_source": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-llama",
+    "build": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-llama/build-msi-sm86",
+    "cuda_architecture": 86,
+    "cuda_toolkit": "13.0.88",
+    "adapter_source": "src/adapters/qwen3_next_plan_runtime_adapter.cpp",
+    "adapter_source_sha256": "ca637a7c84e336862273f98e2334529df1082fee97f4e0f5f6bf2ea1893e5bdb",
+    "observer_source": "tools/observe_qwen3_next_plan_consumer.py",
+    "observer_source_sha256": "36a30a1860375dc13c2ea2bcd2da720ad0a6d098a33b4398e1f7bca31022d8fb",
+    "bounded_launcher_source": "tools/run_qwen3_next_bounded_cell.sh",
+    "bounded_launcher_source_sha256": "b7973f298aa8ef36c8c966b9ed0f7128ef6531f038c6783ac82a1ca70b1c1032",
+    "canary_validator_source": "tools/validate_qwen3_next_canary.py",
+    "canary_validator_source_sha256": "b5e60a81b8082017ef9d512703232814358be774214c6ce4dcc29f07194b6007",
+    "cell_validator_source": "tools/validate_qwen3_next_cell.py",
+    "cell_validator_source_sha256": "68316b3813d04b6d7490328d2c7fe8a451142221645cd6f227a48c3307476519",
+    "cache_replay_source": "tools/replay_qwen3_next_cache.py",
+    "cache_replay_source_sha256": "a8ac3bf9852132a64672761c4ee49efd61e150159fdda4e810d24548fe421b66"
+  },
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "gpu_compute_capability": "8.6",
+    "host_cgroup_max_bytes": 11811160064,
+    "gpu_attributable_max_bytes": 24696061952,
+    "minimum_host_margin_bytes": 536870912,
+    "minimum_gpu_margin_bytes": 536870912,
+    "concurrency": 1,
+    "swap_max_bytes": 0
+  },
+  "correctness": {
+    "authority": "Same-build synchronous-source control versus eight-window aligned O_DIRECT candidate using identical prompt tokens, greedy sampling, native Q4_K/Q6_K expert bytes, logits, generated tokens, route events, destination identities, and lifecycle.",
+    "logits": "bitwise identical",
+    "tokens": "exactly identical",
+    "routing": "exactly identical",
+    "source_h2d_plan_reset_teardown": "balanced",
+    "implementation_failure_semantics": "INVALID and return to diagnosis"
+  },
+  "workload": {
+    "canary": {
+      "input_tokens": [256, 512],
+      "output_tokens": 8,
+      "n_ubatch": 512
+    },
+    "prefill_ladder_tokens": [512, 2048, 8192, 32768],
+    "prefill_32768_prompt": {
+      "path": "/data/ai/runs/memory-sovereign-inference/20260819T-qwen3-next-thin-vertical-development/inputs/heldout-code-x4.txt",
+      "bytes": 327508,
+      "sha256": "c9b183f5dfb02a330fba524a2fb28d5d8c8c9fa74115afa5cbcf8075767904f2",
+      "derivation": "Four ordered byte-identical copies of the frozen heldout_code.txt fixture; the official chat template is applied once and the tokenized prompt is prospectively truncated to 32768 tokens. This is a prefill mechanics workload, not a semantic-quality workload."
+    },
+    "decode_trace_outputs": [64, 128],
+    "cache_capacities": [0, 64, 128, 192, 224],
+    "cache_policies": ["static_frequency", "lru", "lfu"],
+    "oracle_policy": "belady",
+    "primary_product_point": {
+      "input_tokens": 32768,
+      "output_tokens": 2048
+    }
+  },
+  "cell_budgets": {
+    "canary": {"maximum_physical_source_bytes": 65000000000, "maximum_wall_seconds": 600},
+    "prefill_512": {"maximum_physical_source_bytes": 65000000000, "maximum_wall_seconds": 600},
+    "prefill_2048": {"maximum_physical_source_bytes": 220000000000, "maximum_wall_seconds": 1200},
+    "prefill_8192": {"maximum_physical_source_bytes": 850000000000, "maximum_wall_seconds": 3000},
+    "prefill_32768": {"maximum_physical_source_bytes": 3300000000000, "maximum_wall_seconds": 7200},
+    "decode_trace": {"maximum_physical_source_bytes": 190000000000, "maximum_wall_seconds": 1800}
+  },
+  "estimands": {
+    "source_bytes_per_output": "Physical candidate source bytes during decode divided by committed target output tokens.",
+    "exposed_source_seconds_per_output": "Candidate source-service exposed wait during decode divided by committed target output tokens.",
+    "compute_inclusive_favorable_rate": "Committed target outputs divided by measured target compute plus the implementable-policy exposed source bound; oracle replay is reported separately.",
+    "prefill_rereads": "Per-layer physical expert materializations after the first touch, reported by prompt point and microbatch shape.",
+    "resource_margin": "Declared H or G minus complete-cgroup or physical-board candidate peak respectively."
+  },
+  "continuation_rules": {
+    "below_3_output_tokens_per_second": "Close interactive P2 for the tested route unless one cheap capability discriminator shows material advantage.",
+    "from_3_to_below_5": "Run one cheap Qwen3-Next versus resident-Qwen3.6 capability discriminator before cache engineering.",
+    "at_least_5": "Implement only the smallest feasible policy that crossed if prefill remains credible.",
+    "oracle_only": "Treat predictive routing as a separate mechanism decision.",
+    "at_least_7": "Strong evidence to fund the product vertical.",
+    "prefill_redirect": "Stop chunk-major scaling when the trace-grounded favorable projection exceeds 180 seconds cold TTFT at 32K or the next cell budget; evaluate layer-major prefill as a separately named successor."
+  },
+  "claim_boundary": "This contract can establish target execution, exact source binding, routing, bounded prefill behavior, short decode economics, and offline cache-policy bounds at one local RTX 3090 identity. It cannot establish product admission, resident-comparator superiority, Stage 6 completion, broader hardware generality, or Qwen3-Next family rejection."
+}

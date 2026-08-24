@@ -1,0 +1,1690 @@
+#include "ggml-backend.h"
+#include "ggml.h"
+#include "gguf.h"
+#include "llama-model.h"
+#include "llama.h"
+
+#include "plan_service_bundle.hpp"
+#include "bounded_source_service.hpp"
+
+#include <cuda_runtime_api.h>
+#include <nlohmann/json.hpp>
+
+#include <algorithm>
+#include <array>
+#include <cerrno>
+#include <chrono>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <exception>
+#include <fcntl.h>
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <optional>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+namespace {
+
+using Clock = std::chrono::steady_clock;
+using Json = nlohmann::json;
+using msi::plan_service::BundleManifest;
+using msi::plan_service::ComponentManifest;
+using msi::plan_service::DestinationView;
+using msi::plan_service::Extent;
+using msi::plan_service::FileManifest;
+using msi::plan_service::Manifest;
+using msi::plan_v0::Engine;
+using msi::plan_v0::Id;
+using msi::plan_v0::Snapshot;
+using PlanWindowTicket = msi::plan_v0::WindowTicket;
+using SourceExtent = msi::bounded_source::Extent;
+using SourceFaultMode = msi::bounded_source::FaultMode;
+using SourceService = msi::bounded_source::Service;
+using SourceTicket = msi::bounded_source::Ticket;
+using SourceWindow = msi::bounded_source::Window;
+
+constexpr std::uint64_t kOfficialModelBytes = 14439363584ULL;
+constexpr int kLayers = 30;
+constexpr int kExperts = 128;
+constexpr int kExpertsUsed = 8;
+constexpr std::uint64_t kSlotId = 300;
+constexpr std::uint64_t kWindowId = 400;
+constexpr int kMaximumSourceInFlight = 8;
+constexpr std::uint64_t kSourceFileId = 10;
+constexpr std::uint64_t kMaterializedFileId = 11;
+constexpr std::uint64_t kGateRole = 3001;
+constexpr std::uint64_t kDownRole = 3002;
+constexpr std::uint64_t kScaleRole = 3003;
+
+struct Args {
+    std::string arm;
+    std::string fault = "none";
+    std::string model;
+    std::string backend_dir;
+    std::string prompt;
+    std::string output;
+    std::string logits;
+    int n_predict = 32;
+    int cache_capacity = 0;
+    int n_gpu_layers = 99;
+    bool preflight = false;
+    bool drop_source_cache = false;
+    bool no_mmap = false;
+    bool bounded_source = false;
+    bool source_direct = false;
+    int source_in_flight = 1;
+};
+
+struct TensorGeometry {
+    std::uint64_t source_offset = 0;
+    std::uint64_t tensor_bytes = 0;
+    std::uint64_t expert_bytes = 0;
+    ggml_tensor * destination = nullptr;
+};
+
+struct LayerGeometry {
+    TensorGeometry gate;
+    TensorGeometry down;
+    TensorGeometry scale;
+};
+
+struct Timings {
+    std::uint64_t source_ns = 0;
+    std::uint64_t h2d_ns = 0;
+    std::uint64_t scatter_ns = 0;
+    std::uint64_t cache_fill_ns = 0;
+};
+
+struct ProcessIo {
+    std::uint64_t rchar = 0;
+    std::uint64_t syscr = 0;
+    std::uint64_t read_bytes = 0;
+};
+
+void require(bool condition, const std::string & message);
+
+ProcessIo process_io() {
+    std::ifstream input("/proc/self/io");
+    require(static_cast<bool>(input), "cannot open /proc/self/io");
+    ProcessIo result;
+    std::string key;
+    std::uint64_t value = 0;
+    while (input >> key >> value) {
+        if (key == "rchar:") {
+            result.rchar = value;
+        } else if (key == "syscr:") {
+            result.syscr = value;
+        } else if (key == "read_bytes:") {
+            result.read_bytes = value;
+        }
+    }
+    return result;
+}
+
+Json process_io_delta(const ProcessIo & begin, const ProcessIo & end) {
+    require(end.rchar >= begin.rchar && end.syscr >= begin.syscr &&
+            end.read_bytes >= begin.read_bytes,
+            "process I/O counters moved backwards");
+    return {
+        {"logical_read_characters", end.rchar - begin.rchar},
+        {"read_syscalls", end.syscr - begin.syscr},
+        {"physical_storage_read_bytes", end.read_bytes - begin.read_bytes},
+    };
+}
+
+std::uint64_t elapsed_ns(Clock::time_point begin, Clock::time_point end) {
+    return static_cast<std::uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count());
+}
+
+void require(bool condition, const std::string & message) {
+    if (!condition) {
+        throw std::runtime_error(message);
+    }
+}
+
+std::uint64_t address_of(const void * pointer) {
+    return static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(pointer));
+}
+
+std::uint64_t file_size(const std::string & path) {
+    struct stat info {};
+    if (stat(path.c_str(), &info) != 0) {
+        throw std::runtime_error("stat failed for " + path + ": " + std::strerror(errno));
+    }
+    return static_cast<std::uint64_t>(info.st_size);
+}
+
+void read_exact(int fd, std::uint64_t offset, void * destination, std::size_t bytes) {
+    std::size_t complete = 0;
+    while (complete < bytes) {
+        const ssize_t count = pread(fd, static_cast<char *>(destination) + complete,
+                                    bytes - complete,
+                                    static_cast<off_t>(offset + complete));
+        if (count < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            throw std::runtime_error("pread failed: " + std::string(std::strerror(errno)));
+        }
+        if (count == 0) {
+            throw std::runtime_error("unexpected end of GGUF source");
+        }
+        complete += static_cast<std::size_t>(count);
+    }
+}
+
+Args parse_args(int argc, char ** argv) {
+    Args args;
+    for (int index = 1; index < argc; ++index) {
+        const std::string key = argv[index];
+        if (key == "--preflight") {
+            args.preflight = true;
+            continue;
+        }
+        if (key == "--drop-source-cache") {
+            args.drop_source_cache = true;
+            continue;
+        }
+        if (key == "--no-mmap") {
+            args.no_mmap = true;
+            continue;
+        }
+        if (key == "--bounded-source") {
+            args.bounded_source = true;
+            continue;
+        }
+        if (key == "--source-direct") {
+            args.source_direct = true;
+            continue;
+        }
+        if (index + 1 >= argc) {
+            throw std::invalid_argument("missing value for " + key);
+        }
+        const std::string value = argv[++index];
+        if (key == "--arm") {
+            args.arm = value;
+        } else if (key == "--fault") {
+            args.fault = value;
+        } else if (key == "--model") {
+            args.model = value;
+        } else if (key == "--backend-dir") {
+            args.backend_dir = value;
+        } else if (key == "--prompt") {
+            args.prompt = value;
+        } else if (key == "--output") {
+            args.output = value;
+        } else if (key == "--logits") {
+            args.logits = value;
+        } else if (key == "--n-predict") {
+            args.n_predict = std::stoi(value);
+        } else if (key == "--cache-capacity") {
+            args.cache_capacity = std::stoi(value);
+        } else if (key == "--n-gpu-layers") {
+            args.n_gpu_layers = std::stoi(value);
+        } else if (key == "--source-in-flight") {
+            args.source_in_flight = std::stoi(value);
+        } else {
+            throw std::invalid_argument("unknown argument: " + key);
+        }
+    }
+    if (args.arm != "resident_control" && args.arm != "resident_observed_control" &&
+        args.arm != "resident_trace_control" && args.arm != "plan_staged_candidate" &&
+        args.arm != "plan_cached_candidate" && args.arm != "fault_canary") {
+        throw std::invalid_argument(
+            "--arm must name resident_control, resident_observed_control, "
+            "resident_trace_control, plan_staged_candidate, plan_cached_candidate, or fault_canary");
+    }
+    if (args.model.empty() || args.backend_dir.empty() || args.prompt.empty() ||
+        args.output.empty() || args.logits.empty() || args.n_predict < 8 ||
+        args.n_predict > 128 || args.n_gpu_layers < 0) {
+        throw std::invalid_argument("incomplete or invalid Phase 3 arguments");
+    }
+    if (args.arm == "fault_canary") {
+        if (args.cache_capacity != 0 || args.n_predict != 8 ||
+            (args.fault != "none" && args.fault != "short_read" &&
+             args.fault != "stale_completion" && args.fault != "held_consumer")) {
+            throw std::invalid_argument(
+                "fault_canary requires none, short_read, stale_completion, or held_consumer at zero-cache n_predict=8");
+        }
+        args.no_mmap = true;
+        args.bounded_source = true;
+        args.source_direct = true;
+        args.source_in_flight = 8;
+        args.drop_source_cache = false;
+    } else if ((args.arm == "plan_cached_candidate") != (args.cache_capacity > 0) ||
+               args.cache_capacity < 0 || args.cache_capacity > kExperts) {
+        throw std::invalid_argument(
+            "plan_cached_candidate requires --cache-capacity in [1, 128]; other arms require 0");
+    }
+    if (args.source_direct && !args.bounded_source) {
+        throw std::invalid_argument("--source-direct requires --bounded-source");
+    }
+    if (args.source_in_flight < 1 || args.source_in_flight > kMaximumSourceInFlight ||
+        (!args.bounded_source && args.source_in_flight != 1)) {
+        throw std::invalid_argument(
+            "bounded source in-flight count must be in [1, 8]");
+    }
+    if (args.arm != "fault_canary" && args.fault != "none") {
+        throw std::invalid_argument("--fault is exclusive to fault_canary");
+    }
+    return args;
+}
+
+std::string tensor_name(int layer, const char * suffix) {
+    return "blk." + std::to_string(layer) + "." + suffix;
+}
+
+Id object_id(int layer, int expert) {
+    return 100000 + static_cast<Id>(layer * kExperts + expert);
+}
+
+Json snapshot_json(const Snapshot & snapshot) {
+    const auto & telemetry = snapshot.telemetry;
+    return {
+        {"lifecycle", static_cast<unsigned>(snapshot.lifecycle)},
+        {"request_epoch", snapshot.request_epoch},
+        {"ready_slots", snapshot.ready_slots},
+        {"bound_slots", snapshot.bound_slots},
+        {"live_consumers", snapshot.live_consumers},
+        {"free_windows", snapshot.free_windows},
+        {"filling_windows", snapshot.filling_windows},
+        {"ready_windows", snapshot.ready_windows},
+        {"copying_windows", snapshot.copying_windows},
+        {"recyclable_windows", snapshot.recyclable_windows},
+        {"telemetry", {
+            {"requests_begun", telemetry.requests_begun},
+            {"requests_finished", telemetry.requests_finished},
+            {"scheduled_objects", telemetry.scheduled_objects},
+            {"bindings", telemetry.bindings},
+            {"readiness_events", telemetry.readiness_events},
+            {"consumer_acquires", telemetry.consumer_acquires},
+            {"consumer_completions", telemetry.consumer_completions},
+            {"slot_releases", telemetry.slot_releases},
+            {"source_reads_issued", telemetry.source_reads_issued},
+            {"source_reads_completed", telemetry.source_reads_completed},
+            {"completed_application_read_bytes", telemetry.completed_application_read_bytes},
+            {"h2d_issued_bytes", telemetry.h2d_issued_bytes},
+            {"h2d_completed_bytes", telemetry.h2d_completed_bytes},
+            {"window_recycles", telemetry.window_recycles},
+            {"resets", telemetry.resets},
+            {"shutdowns", telemetry.shutdowns},
+            {"lifecycle_rejections", telemetry.lifecycle_rejections},
+            {"capacity_rejections", telemetry.capacity_rejections},
+            {"stale_generation_rejections", telemetry.stale_generation_rejections},
+            {"premature_reuse_rejections", telemetry.premature_reuse_rejections},
+            {"missing_ready_rejections", telemetry.missing_ready_rejections},
+            {"missing_completion_rejections", telemetry.missing_completion_rejections},
+            {"wrong_object_rejections", telemetry.wrong_object_rejections},
+            {"duplicate_completion_rejections", telemetry.duplicate_completion_rejections},
+        }},
+    };
+}
+
+class GemmaRouteObserver {
+  public:
+    static bool callback(ggml_tensor * tensor, bool ask, void * user_data) {
+        auto * self = static_cast<GemmaRouteObserver *>(user_data);
+        int layer = -1;
+        if (sscanf(ggml_get_name(tensor), "ffn_moe_topk-%d", &layer) != 1 ||
+            layer < 0 || layer >= kLayers) {
+            return false;
+        }
+        if (ask) {
+            return true;
+        }
+        self->observe(layer, tensor);
+        return true;
+    }
+
+    void begin_step(std::uint64_t step) {
+        require(layers_seen_.empty(), "route observer step already active");
+        current_step_ = step;
+    }
+
+    void finish_step() {
+        require(layers_seen_.size() == kLayers,
+                "route observer did not visit every Gemma MoE layer");
+        layers_seen_.clear();
+    }
+
+    Json report() const {
+        return {
+            {"layers", kLayers},
+            {"experts", kExperts},
+            {"experts_used", kExpertsUsed},
+            {"route_events", route_events_},
+        };
+    }
+
+  private:
+    void observe(int layer, ggml_tensor * selected_tensor) {
+        require(layers_seen_.insert(layer).second,
+                "route observer saw a repeated layer in one step");
+        const std::size_t count = static_cast<std::size_t>(ggml_nelements(selected_tensor));
+        require(count > 0 && count % kExpertsUsed == 0,
+                "unexpected Gemma top-k tensor shape");
+        std::vector<std::int32_t> selected(count);
+        ggml_backend_tensor_get(selected_tensor, selected.data(), 0,
+                                selected.size() * sizeof(selected.front()));
+        std::vector<int> unique;
+        std::array<bool, kExperts> seen{};
+        for (const std::int32_t expert : selected) {
+            require(expert >= 0 && expert < kExperts,
+                    "router selected an invalid expert");
+            if (!seen[expert]) {
+                seen[expert] = true;
+                unique.push_back(expert);
+            }
+        }
+        route_events_.push_back({
+            {"step", current_step_},
+            {"layer", layer},
+            {"tokens", count / kExpertsUsed},
+            {"selected_unique", unique},
+        });
+    }
+
+    std::uint64_t current_step_ = 0;
+    std::set<int> layers_seen_;
+    Json route_events_ = Json::array();
+};
+
+class GemmaPlanStreamer {
+  public:
+    GemmaPlanStreamer(const Args & args, llama_model * model)
+        : args_(args), model_(model), host_windows_(1) {
+        load_geometry();
+        open_source();
+        initialize_gpu_slot();
+        initialize_plan();
+        initialize_cache();
+    }
+
+    GemmaPlanStreamer(const GemmaPlanStreamer &) = delete;
+    GemmaPlanStreamer & operator=(const GemmaPlanStreamer &) = delete;
+
+    ~GemmaPlanStreamer() {
+        if (plan_ && !shutdown_) {
+            try {
+                if (step_active_) {
+                    plan_->reset(0);
+                }
+                plan_->shutdown();
+            } catch (...) {
+            }
+        }
+        if (cache_data_ != nullptr) {
+            cudaFree(cache_data_);
+        }
+        if (plan_buffer_ != nullptr) {
+            ggml_backend_buffer_free(plan_buffer_);
+        }
+        if (plan_ctx_ != nullptr) {
+            ggml_free(plan_ctx_);
+        }
+        if (backend_ != nullptr) {
+            ggml_backend_free(backend_);
+        }
+        source_service_.reset();
+        if (host_windows_registered_) {
+            cudaHostUnregister(host_windows_.data());
+            host_windows_registered_ = false;
+        }
+        if (fd_ >= 0) {
+            close(fd_);
+        }
+    }
+
+    static bool callback(ggml_tensor * tensor, bool ask, void * user_data) {
+        auto * self = static_cast<GemmaPlanStreamer *>(user_data);
+        int layer = -1;
+        if (sscanf(ggml_get_name(tensor), "ffn_moe_topk-%d", &layer) != 1 ||
+            layer < 0 || layer >= kLayers) {
+            return false;
+        }
+        if (ask) {
+            return true;
+        }
+        try {
+            self->service_layer(layer, tensor);
+            return true;
+        } catch (const std::exception & error) {
+            self->callback_error_ = error.what();
+            return false;
+        }
+    }
+
+    void begin_step(std::uint64_t request_id) {
+        require(!step_active_, "Plan step already active");
+        callback_error_.clear();
+        layers_seen_.clear();
+        plan_->begin_request(request_id);
+        step_active_ = true;
+        current_step_ = request_id - 1;
+    }
+
+    void finish_step() {
+        require(step_active_, "Plan step is not active");
+        require(callback_error_.empty(), "route callback failed: " + callback_error_);
+        require(layers_seen_.size() == kLayers, "stock graph did not visit all Gemma MoE layers");
+        for (int layer = 0; layer < kLayers; ++layer) {
+            require(layers_seen_.count(layer) == 1, "stock graph skipped a Gemma MoE layer");
+        }
+        plan_->finish_request();
+        step_active_ = false;
+    }
+
+    void abort_step() {
+        if (step_active_) {
+            plan_->reset(0);
+            step_active_ = false;
+        }
+    }
+
+    bool fatal_fault_triggered() const {
+        return fault_triggered_ && fault_fatal_;
+    }
+
+    Json fault_report() const {
+        return {
+            {"requested", args_.fault},
+            {"triggered", fault_triggered_},
+            {"fatal", fault_fatal_},
+            {"stage", fault_stage_},
+            {"rejection", fault_rejection_},
+            {"details", fault_details_},
+            {"terminal_plan_snapshot", fault_terminal_snapshot_},
+            {"terminal_source_snapshot", fault_terminal_source_},
+        };
+    }
+
+    void shutdown() {
+        require(!step_active_, "cannot shutdown Plan with an active decode step");
+        plan_->reset(0);
+        pre_shutdown_ = snapshot_json(plan_->snapshot());
+        plan_->shutdown();
+        shutdown_snapshot_ = snapshot_json(plan_->snapshot());
+        if (source_service_) {
+            source_service_->shutdown();
+        }
+        shutdown_ = true;
+    }
+
+    Json report() const {
+        Json occupancy = Json::array();
+        for (const auto & layer : cache_entries_) {
+            std::uint64_t count = 0;
+            for (const auto & entry : layer) {
+                count += entry.valid ? 1 : 0;
+            }
+            occupancy.push_back(count);
+        }
+        const std::uint64_t cache_miss_bytes = cache_misses_ * bundle_bytes_;
+        const std::uint64_t cache_hit_bytes = cache_hits_ * bundle_bytes_;
+        return {
+            {"component_manifest_valid", true},
+            {"layers", kLayers},
+            {"experts", kExperts},
+            {"experts_used", kExpertsUsed},
+            {"expert_bundle_bytes", bundle_bytes_},
+            {"shared_destination_raw_bytes", shared_destination_raw_bytes_},
+            {"plan_gpu_slot_bytes", plan_buffer_bytes_},
+            {"host_window_bytes", host_windows_.size()},
+            {"bounded_source", source_report()},
+            {"fault", fault_report()},
+            {"materializations", materializations_},
+            {"unique_selected_expert_instances", cache_enabled_ ? cache_accesses_ : materializations_},
+            {"storage_bytes", materializations_ * bundle_bytes_},
+            {"source_cache_advice", {
+                {"enabled", args_.drop_source_cache},
+                {"calls", source_cache_advice_calls_},
+                {"bytes", source_cache_advice_bytes_},
+            }},
+            {"h2d_bytes", materializations_ * bundle_bytes_},
+            {"d2d_scatter_bytes", (materializations_ + cache_hits_) * bundle_bytes_},
+            {"slot_reuse_count", materializations_ == 0 ? 0 : materializations_ - 1},
+            {"window_reuse_count", materializations_ == 0 ? 0 : materializations_ - 1},
+            {"cache", {
+                {"enabled", cache_enabled_},
+                {"policy", cache_enabled_ ? "per_layer_lru" : "disabled"},
+                {"capacity_per_layer", args_.cache_capacity},
+                {"requested_bytes", cache_bytes_},
+                {"accesses", cache_accesses_},
+                {"hits", cache_hits_},
+                {"misses", cache_misses_},
+                {"hit_rate", cache_accesses_ == 0 ? 0.0 :
+                    static_cast<double>(cache_hits_) / static_cast<double>(cache_accesses_)},
+                {"prefill_accesses", prefill_cache_accesses_},
+                {"prefill_hits", prefill_cache_hits_},
+                {"prefill_misses", prefill_cache_misses_},
+                {"decode_accesses", decode_cache_accesses_},
+                {"decode_hits", decode_cache_hits_},
+                {"decode_misses", decode_cache_misses_},
+                {"logical_hit_bytes", cache_hit_bytes},
+                {"logical_miss_bytes", cache_miss_bytes},
+                {"populations", cache_populations_},
+                {"evictions", cache_evictions_},
+                {"prefill_tail_population_skips", prefill_tail_population_skips_},
+                {"generation_updates", cache_generation_},
+                {"stale_entry_rejections", cache_stale_rejections_},
+                {"premature_reuse_rejections", cache_premature_reuse_rejections_},
+                {"cache_fill_d2d_bytes", cache_populations_ * bundle_bytes_},
+                {"cache_hit_d2d_bytes", cache_hit_bytes},
+                {"destination_d2d_bytes", (materializations_ + cache_hits_) * bundle_bytes_},
+                {"final_occupancy_per_layer", occupancy},
+                {"max_occupancy_per_layer", max_cache_occupancy_},
+            }},
+            {"timing_ns", {
+                {"storage", timings_.source_ns},
+                {"h2d", timings_.h2d_ns},
+                {"d2d_scatter", timings_.scatter_ns},
+                {"cache_fill", timings_.cache_fill_ns},
+            }},
+            {"route_events", route_events_},
+            {"pre_shutdown_snapshot", pre_shutdown_},
+            {"shutdown_snapshot", shutdown_snapshot_},
+        };
+    }
+
+  private:
+    void record_fault(const std::string & stage, bool fatal,
+                      const std::string & rejection, Json details = Json::object()) {
+        require(!fault_triggered_, "fault hook triggered more than once");
+        fault_triggered_ = true;
+        fault_fatal_ = fatal;
+        fault_stage_ = stage;
+        fault_rejection_ = rejection;
+        fault_details_ = std::move(details);
+        fault_terminal_snapshot_ = snapshot_json(plan_->snapshot());
+        fault_terminal_source_ = source_report();
+    }
+
+    template <typename Action>
+    void expect_nonfatal_rejection(const std::string & stage, Action action,
+                                   Json details = Json::object()) {
+        const Json before = snapshot_json(plan_->snapshot());
+        try {
+            action();
+        } catch (const std::exception & error) {
+            details["before"] = before;
+            details["after"] = snapshot_json(plan_->snapshot());
+            record_fault(stage, false, error.what(), std::move(details));
+            return;
+        }
+        throw std::runtime_error("fault hook was unexpectedly accepted: " + stage);
+    }
+
+    struct CacheEntry {
+        int expert = -1;
+        std::uint64_t last_use = 0;
+        std::uint64_t generation = 0;
+        bool valid = false;
+    };
+
+    struct PendingSource {
+        SourceTicket ticket;
+        std::size_t window_index = 0;
+    };
+
+    static TensorGeometry source_geometry(const gguf_context * gguf, int layer,
+                                          const char * suffix,
+                                          ggml_tensor * destination) {
+        const std::string name = tensor_name(layer, suffix);
+        const int64_t tensor_id = gguf_find_tensor(gguf, name.c_str());
+        require(tensor_id >= 0, "GGUF tensor is missing: " + name);
+        const std::uint64_t tensor_bytes = gguf_get_tensor_size(gguf, tensor_id);
+        require(tensor_bytes % kExperts == 0, "expert tensor does not split evenly: " + name);
+        require(destination != nullptr, "runtime tensor is missing: " + name);
+        require(ggml_nbytes(destination) == tensor_bytes,
+                "runtime/GGUF tensor size differs: " + name);
+        return {
+            gguf_get_data_offset(gguf) + gguf_get_tensor_offset(gguf, tensor_id),
+            tensor_bytes,
+            tensor_bytes / kExperts,
+            destination,
+        };
+    }
+
+    void load_geometry() {
+        std::unordered_map<std::string, ggml_tensor *> tensors;
+        for (const auto & [name, tensor] : llama_internal_get_tensor_map(model_)) {
+            tensors.emplace(name, tensor);
+        }
+        ggml_context * metadata_ctx = nullptr;
+        gguf_init_params params{true, &metadata_ctx};
+        gguf_context * gguf = gguf_init_from_file(args_.model.c_str(), params);
+        require(gguf != nullptr && metadata_ctx != nullptr, "cannot open GGUF metadata");
+        try {
+            for (int layer = 0; layer < kLayers; ++layer) {
+                layers_[layer].gate = source_geometry(
+                    gguf, layer, "ffn_gate_up_exps.weight",
+                    tensors.at(tensor_name(layer, "ffn_gate_up_exps.weight")));
+                layers_[layer].down = source_geometry(
+                    gguf, layer, "ffn_down_exps.weight",
+                    tensors.at(tensor_name(layer, "ffn_down_exps.weight")));
+                layers_[layer].scale = source_geometry(
+                    gguf, layer, "ffn_down_exps.scale",
+                    tensors.at(tensor_name(layer, "ffn_down_exps.scale")));
+            }
+            gate_bytes_ = layers_[0].gate.expert_bytes;
+            down_bytes_ = layers_[0].down.expert_bytes;
+            scale_bytes_ = layers_[0].scale.expert_bytes;
+            bundle_bytes_ = gate_bytes_ + down_bytes_ + scale_bytes_;
+            source_file_bytes_ = file_size(args_.model);
+            managed_expert_inventory_bytes_ =
+                static_cast<std::uint64_t>(kLayers) * kExperts * bundle_bytes_;
+            require(gate_bytes_ == 2230272 && down_bytes_ == 1115136 && scale_bytes_ == 4,
+                    "official Gemma expert geometry changed");
+            require(source_file_bytes_ == kOfficialModelBytes,
+                    "official Gemma source-file size changed");
+            require(managed_expert_inventory_bytes_ == 12846382080ULL,
+                    "official Gemma managed expert inventory changed");
+            for (const auto & layer : layers_) {
+                require(layer.gate.expert_bytes == gate_bytes_ &&
+                        layer.down.expert_bytes == down_bytes_ &&
+                        layer.scale.expert_bytes == scale_bytes_,
+                        "Gemma expert geometry is not uniform");
+                require(layer.gate.destination->data == layers_[0].gate.destination->data &&
+                        layer.down.destination->data == layers_[0].down.destination->data &&
+                        layer.scale.destination->data == layers_[0].scale.destination->data,
+                        "runtime expert descriptors do not share the streamed destination");
+            }
+            shared_destination_raw_bytes_ = layers_[0].gate.tensor_bytes +
+                                            layers_[0].down.tensor_bytes +
+                                            layers_[0].scale.tensor_bytes;
+        } catch (...) {
+            gguf_free(gguf);
+            ggml_free(metadata_ctx);
+            throw;
+        }
+        gguf_free(gguf);
+        ggml_free(metadata_ctx);
+    }
+
+    void open_source() {
+        const std::size_t window_count = args_.bounded_source ?
+            static_cast<std::size_t>(args_.source_in_flight) : 1;
+        host_windows_.resize(window_count * bundle_bytes_);
+        if (!args_.bounded_source) {
+            fd_ = open(args_.model.c_str(), O_RDONLY | O_CLOEXEC);
+            require(fd_ >= 0,
+                    "cannot open GGUF payload: " + std::string(std::strerror(errno)));
+            return;
+        }
+        const cudaError_t register_status = cudaHostRegister(
+            host_windows_.data(), host_windows_.size(), cudaHostRegisterPortable);
+        require(register_status == cudaSuccess,
+                std::string("bounded source host-window registration failed: ") +
+                cudaGetErrorString(register_status));
+        host_windows_registered_ = true;
+        std::vector<SourceWindow> windows;
+        windows.reserve(window_count);
+        for (std::size_t index = 0; index < window_count; ++index) {
+            windows.push_back(SourceWindow{
+                kWindowId + static_cast<Id>(index),
+                address_of(host_windows_.data() + index * bundle_bytes_),
+                bundle_bytes_,
+            });
+        }
+        source_service_ = std::make_unique<SourceService>(
+            args_.model, std::move(windows), window_count, args_.source_direct,
+            4096, args_.drop_source_cache,
+            args_.fault == "short_read" ? SourceFaultMode::ShortSuccess :
+                                           SourceFaultMode::None);
+    }
+
+    char * host_window_pointer(std::size_t index) {
+        require(index < static_cast<std::size_t>(args_.source_in_flight),
+                "bounded source host-window index is invalid");
+        return reinterpret_cast<char *>(host_windows_.data() + index * bundle_bytes_);
+    }
+
+    Json source_report() const {
+        const Json identity = {
+            {"source_file_bytes", source_file_bytes_},
+            {"managed_expert_inventory_bytes", managed_expert_inventory_bytes_},
+        };
+        if (!source_service_) {
+            Json result = {
+                {"enabled", false},
+                {"in_flight_limit", 1},
+                {"direct_io", false},
+            };
+            result.update(identity);
+            return result;
+        }
+        const auto value = source_service_->snapshot();
+        Json result = {
+            {"enabled", true},
+            {"in_flight_limit", source_service_->max_in_flight()},
+            {"direct_io", source_service_->direct_io()},
+            {"registered_host_windows", host_windows_registered_},
+            {"submissions", value.submissions},
+            {"completions", value.completions},
+            {"cancellations", value.cancellations},
+            {"failures", value.failures},
+            {"logical_bytes", value.logical_bytes},
+            {"physical_read_bytes", value.physical_read_bytes},
+            {"block_read_bytes", value.block_read_bytes},
+            {"padding_bytes", value.padding_bytes},
+            {"read_wall_ns", value.read_wall_ns},
+            {"exposed_wait_ns", value.exposed_wait_ns},
+            {"h2d_issued_bytes", value.h2d_issued_bytes},
+            {"h2d_completed_bytes", value.h2d_completed_bytes},
+            {"queue_rejections", value.queue_rejections},
+            {"lifecycle_rejections", value.lifecycle_rejections},
+            {"generation_reuses", value.generation_reuses},
+            {"injected_short_completions", value.injected_short_completions},
+            {"injected_completed_extents", value.injected_completed_extents},
+            {"dynamic_direct_allocations", value.dynamic_direct_allocations},
+            {"peak_in_flight", value.peak_in_flight},
+            {"active_tickets", value.active_tickets},
+            {"free_windows", value.free_windows},
+            {"filling_windows", value.filling_windows},
+            {"ready_windows", value.ready_windows},
+            {"copying_windows", value.copying_windows},
+            {"retirable_windows", value.retirable_windows},
+        };
+        result.update(identity);
+        return result;
+    }
+
+    void initialize_gpu_slot() {
+        ggml_backend_dev_t device = ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_GPU);
+        require(device != nullptr, "GPU backend is unavailable");
+        backend_ = ggml_backend_dev_init(device, nullptr);
+        require(backend_ != nullptr, "GPU backend initialization failed");
+        ggml_init_params params{1024 * 1024, nullptr, true};
+        plan_ctx_ = ggml_init(params);
+        require(plan_ctx_ != nullptr, "Plan tensor context initialization failed");
+        plan_tensor_ = ggml_new_tensor_1d(plan_ctx_, GGML_TYPE_I8,
+                                          static_cast<int64_t>(bundle_bytes_));
+        plan_buffer_ = ggml_backend_alloc_ctx_tensors(plan_ctx_, backend_);
+        require(plan_buffer_ != nullptr, "Plan GPU slot allocation failed");
+        plan_buffer_bytes_ = ggml_backend_buffer_get_size(plan_buffer_);
+    }
+
+    Manifest make_component_manifest() const {
+        Manifest manifest;
+        manifest.manifest_identity = 0x47454d4d41345033ULL;
+        const std::uint64_t gpu_base = address_of(plan_tensor_->data);
+        manifest.arena = {1, gpu_base, plan_buffer_bytes_};
+        manifest.managed_host_bytes = host_windows_.size();
+        manifest.files = {
+            FileManifest{kSourceFileId, file_size(args_.model)},
+            FileManifest{kMaterializedFileId,
+                         static_cast<std::uint64_t>(kLayers) * kExperts * bundle_bytes_},
+        };
+        manifest.gpu_slots = {{kSlotId, plan_buffer_bytes_, gpu_base}};
+        std::vector<Id> allowed_window_ids;
+        for (int index = 0; index < args_.source_in_flight; ++index) {
+            const Id window_id = kWindowId + static_cast<Id>(index);
+            allowed_window_ids.push_back(window_id);
+            manifest.host_windows.push_back({
+                window_id,
+                address_of(host_windows_.data() +
+                           static_cast<std::size_t>(index) * bundle_bytes_),
+                bundle_bytes_,
+            });
+        }
+        manifest.bundles.reserve(kLayers * kExperts);
+        for (int layer = 0; layer < kLayers; ++layer) {
+            for (int expert = 0; expert < kExperts; ++expert) {
+                const Id object = object_id(layer, expert);
+                const std::uint64_t ordinal = static_cast<std::uint64_t>(layer * kExperts + expert);
+                const std::uint64_t materialized_base = ordinal * bundle_bytes_;
+                const Id component_base = 1000000 + ordinal * 3;
+                const Id tensor_base = 2000000 + static_cast<Id>(layer) * 3;
+                BundleManifest bundle;
+                bundle.object_id = object;
+                bundle.graph_role_id = 4000 + layer;
+                bundle.canonical_artifact_id = 5000;
+                bundle.transformation_id = 5001;
+                bundle.bundle_identity = 6000000 + ordinal;
+                bundle.execution_layout_id = 5002;
+                bundle.backend_id = 5003;
+                bundle.slot_id = msi::plan_service::kInvalidId;
+                bundle.allowed_slot_ids = {kSlotId};
+                bundle.host_window_id = msi::plan_service::kInvalidId;
+                bundle.allowed_host_window_ids = allowed_window_ids;
+                bundle.stable_address = gpu_base;
+                bundle.materialized_bytes = bundle_bytes_;
+                bundle.slot_requirement_bytes = bundle_bytes_;
+                bundle.window_requirement_bytes = bundle_bytes_;
+                bundle.required_alignment = 128;
+                bundle.max_consumers = 1;
+                bundle.canonical_tensor_ids = {tensor_base, tensor_base + 1, tensor_base + 2};
+                bundle.required_role_ids = {kGateRole, kDownRole, kScaleRole};
+                bundle.components = {
+                    ComponentManifest{
+                        component_base, kGateRole, tensor_base,
+                        Extent{kSourceFileId,
+                               layers_[layer].gate.source_offset + expert * gate_bytes_,
+                               gate_bytes_, 32, component_base + 10000000},
+                        Extent{kMaterializedFileId, materialized_base,
+                               gate_bytes_, 1, component_base + 20000000},
+                        DestinationView{component_base + 30000000, 0, gate_bytes_, 128},
+                        18, true, {}},
+                    ComponentManifest{
+                        component_base + 1, kDownRole, tensor_base + 1,
+                        Extent{kSourceFileId,
+                               layers_[layer].down.source_offset + expert * down_bytes_,
+                               down_bytes_, 32, component_base + 10000001},
+                        Extent{kMaterializedFileId, materialized_base + gate_bytes_,
+                               down_bytes_, 1, component_base + 20000001},
+                        DestinationView{component_base + 30000001, gate_bytes_, down_bytes_, 128},
+                        18, true, {}},
+                    ComponentManifest{
+                        component_base + 2, kScaleRole, tensor_base + 2,
+                        Extent{kSourceFileId,
+                               layers_[layer].scale.source_offset + expert * scale_bytes_,
+                               scale_bytes_, 4, component_base + 10000002},
+                        Extent{kMaterializedFileId, materialized_base + gate_bytes_ + down_bytes_,
+                               scale_bytes_, 1, component_base + 20000002},
+                        DestinationView{component_base + 30000002,
+                                        gate_bytes_ + down_bytes_, scale_bytes_, 4},
+                        1, true, {}},
+                };
+                manifest.bundles.push_back(std::move(bundle));
+            }
+        }
+        return manifest;
+    }
+
+    void initialize_plan() {
+        Manifest manifest = make_component_manifest();
+        msi::plan_service::validate_manifest(manifest);
+        plan_ = std::make_unique<Engine>(msi::plan_service::lower_to_plan_v0(manifest));
+        plan_->initialize();
+    }
+
+    void initialize_cache() {
+        cache_enabled_ = args_.cache_capacity > 0;
+        if (!cache_enabled_) {
+            return;
+        }
+        cache_bytes_ = static_cast<std::uint64_t>(kLayers) *
+                       static_cast<std::uint64_t>(args_.cache_capacity) * bundle_bytes_;
+        const cudaError_t status = cudaMalloc(&cache_data_, cache_bytes_);
+        require(status == cudaSuccess,
+                std::string("CUDA compact cache allocation failed: ") +
+                cudaGetErrorString(status));
+        for (auto & layer : cache_entries_) {
+            layer.resize(static_cast<std::size_t>(args_.cache_capacity));
+        }
+        max_cache_occupancy_.assign(kLayers, 0);
+    }
+
+    static void copy_d2d(void * destination, const void * source, std::size_t bytes) {
+        const cudaError_t status = cudaMemcpyAsync(destination, source, bytes,
+                                                   cudaMemcpyDeviceToDevice,
+                                                   cudaStreamPerThread);
+        require(status == cudaSuccess,
+                std::string("CUDA D2D copy failed: ") + cudaGetErrorString(status));
+    }
+
+    static void synchronize_d2d() {
+        const cudaError_t status = cudaStreamSynchronize(cudaStreamPerThread);
+        require(status == cudaSuccess,
+                std::string("CUDA D2D synchronization failed: ") +
+                cudaGetErrorString(status));
+    }
+
+    void copy_to_destination(int layer, int expert, const char * source) {
+        const auto begin = Clock::now();
+        copy_d2d(static_cast<char *>(layers_[layer].gate.destination->data) +
+                     expert * gate_bytes_,
+                 source, gate_bytes_);
+        copy_d2d(static_cast<char *>(layers_[layer].down.destination->data) +
+                     expert * down_bytes_,
+                 source + gate_bytes_, down_bytes_);
+        copy_d2d(static_cast<char *>(layers_[layer].scale.destination->data) +
+                     expert * scale_bytes_,
+                 source + gate_bytes_ + down_bytes_, scale_bytes_);
+        synchronize_d2d();
+        timings_.scatter_ns += elapsed_ns(begin, Clock::now());
+    }
+
+    char * cache_slot_pointer(int layer, std::size_t slot) const {
+        require(cache_data_ != nullptr && slot < cache_entries_[layer].size(),
+                "compact cache slot address is invalid");
+        const std::uint64_t ordinal =
+            static_cast<std::uint64_t>(layer) * args_.cache_capacity + slot;
+        return static_cast<char *>(cache_data_) + ordinal * bundle_bytes_;
+    }
+
+    std::size_t find_cache_entry(int layer, int expert) const {
+        const auto & entries = cache_entries_[layer];
+        for (std::size_t index = 0; index < entries.size(); ++index) {
+            if (entries[index].valid && entries[index].expert == expert) {
+                return index;
+            }
+        }
+        return entries.size();
+    }
+
+    std::size_t choose_cache_victim(int layer) const {
+        const auto & entries = cache_entries_[layer];
+        require(!entries.empty(), "compact cache has no entries");
+        for (std::size_t index = 0; index < entries.size(); ++index) {
+            if (!entries[index].valid) {
+                return index;
+            }
+        }
+        return static_cast<std::size_t>(std::distance(
+            entries.begin(),
+            std::min_element(entries.begin(), entries.end(),
+                             [](const CacheEntry & left, const CacheEntry & right) {
+                                 return left.last_use < right.last_use;
+                             })));
+    }
+
+    static std::size_t choose_cache_victim(
+            const std::vector<CacheEntry> & entries) {
+        require(!entries.empty(), "compact cache simulation has no entries");
+        for (std::size_t index = 0; index < entries.size(); ++index) {
+            if (!entries[index].valid) {
+                return index;
+            }
+        }
+        return static_cast<std::size_t>(std::distance(
+            entries.begin(),
+            std::min_element(entries.begin(), entries.end(),
+                             [](const CacheEntry & left, const CacheEntry & right) {
+                                 return left.last_use < right.last_use;
+                             })));
+    }
+
+    std::vector<SourceExtent> source_extents(int layer, int expert) const {
+        return {
+            SourceExtent{layers_[layer].gate.source_offset + expert * gate_bytes_,
+                         gate_bytes_, 0},
+            SourceExtent{layers_[layer].down.source_offset + expert * down_bytes_,
+                         down_bytes_, gate_bytes_},
+            SourceExtent{layers_[layer].scale.source_offset + expert * scale_bytes_,
+                         scale_bytes_, gate_bytes_ + down_bytes_},
+        };
+    }
+
+    void drain_unstarted_source_tasks() {
+        for (const auto & [expert, pending] : pending_source_) {
+            (void)expert;
+            source_service_->await(pending.ticket);
+            source_service_->mark_retirable(pending.ticket);
+            source_service_->retire(pending.ticket);
+        }
+        pending_source_.clear();
+    }
+
+    void submit_chunk(int layer, const std::vector<int> & experts,
+                      const std::vector<bool> & populate) {
+        require(source_service_ && pending_source_.empty() &&
+                experts.size() == populate.size(),
+                "invalid bounded source chunk submission");
+        std::vector<bool> misses(experts.size(), false);
+        if (!cache_enabled_) {
+            std::fill(misses.begin(), misses.end(), true);
+        } else {
+            std::vector<CacheEntry> simulated = cache_entries_[layer];
+            std::uint64_t simulated_clock = cache_clock_;
+            for (std::size_t ordinal = 0; ordinal < experts.size(); ++ordinal) {
+                ++simulated_clock;
+                const int expert = experts[ordinal];
+                auto found = std::find_if(
+                    simulated.begin(), simulated.end(),
+                    [expert](const CacheEntry & entry) {
+                        return entry.valid && entry.expert == expert;
+                    });
+                if (found != simulated.end()) {
+                    found->last_use = simulated_clock;
+                    continue;
+                }
+                misses[ordinal] = true;
+                if (populate[ordinal]) {
+                    CacheEntry & victim = simulated[choose_cache_victim(simulated)];
+                    victim = CacheEntry{expert, simulated_clock, 1, true};
+                }
+            }
+        }
+        std::size_t window_index = 0;
+        for (std::size_t ordinal = 0; ordinal < experts.size(); ++ordinal) {
+            if (!misses[ordinal]) {
+                continue;
+            }
+            require(window_index < static_cast<std::size_t>(args_.source_in_flight),
+                    "bounded source chunk exceeds its fixed windows");
+            const int expert = experts[ordinal];
+            const Id window_id = kWindowId + static_cast<Id>(window_index);
+            PendingSource pending{
+                source_service_->submit(window_id, source_extents(layer, expert)),
+                window_index,
+            };
+            require(pending_source_.emplace(expert, pending).second,
+                    "bounded source expert was submitted twice");
+            ++window_index;
+        }
+    }
+
+    void update_cache_occupancy(int layer) {
+        std::uint64_t occupancy = 0;
+        for (const auto & entry : cache_entries_[layer]) {
+            occupancy += entry.valid ? 1 : 0;
+        }
+        max_cache_occupancy_[layer] = std::max(max_cache_occupancy_[layer], occupancy);
+    }
+
+    void service_layer(int layer, ggml_tensor * selected_tensor) {
+        require(step_active_, "route callback executed outside a Plan decode step");
+        require(layers_seen_.insert(layer).second, "Gemma layer callback repeated within one decode");
+        const std::size_t selected_count = static_cast<std::size_t>(ggml_nelements(selected_tensor));
+        require(selected_count > 0 && selected_count % kExpertsUsed == 0,
+                "unexpected Gemma top-k tensor shape");
+        std::vector<std::int32_t> selected(selected_count);
+        ggml_backend_tensor_get(selected_tensor, selected.data(), 0,
+                                selected.size() * sizeof(selected.front()));
+        std::vector<int> unique;
+        std::array<bool, kExperts> seen{};
+        for (const std::int32_t expert : selected) {
+            require(expert >= 0 && expert < kExperts, "router selected an invalid expert");
+            if (!seen[expert]) {
+                seen[expert] = true;
+                unique.push_back(expert);
+            }
+        }
+        Json event = {
+            {"step", current_step_},
+            {"layer", layer},
+            {"tokens", selected_count / kExpertsUsed},
+            {"selected_unique", unique},
+        };
+        route_events_.push_back(std::move(event));
+        const bool tail_seed = cache_enabled_ && current_step_ == 0 &&
+                               unique.size() > static_cast<std::size_t>(args_.cache_capacity);
+        if (tail_seed) {
+            for (const auto & entry : cache_entries_[layer]) {
+                require(!entry.valid,
+                        "prefill-tail seeding requires an initially empty per-layer cache");
+            }
+        }
+        const std::size_t population_begin = tail_seed ?
+            unique.size() - static_cast<std::size_t>(args_.cache_capacity) : 0;
+        const std::size_t chunk_size = args_.bounded_source ?
+            static_cast<std::size_t>(args_.source_in_flight) : 1;
+        for (std::size_t chunk_begin = 0; chunk_begin < unique.size();
+             chunk_begin += chunk_size) {
+            const std::size_t chunk_end = std::min(unique.size(), chunk_begin + chunk_size);
+            std::vector<int> experts(unique.begin() + chunk_begin,
+                                     unique.begin() + chunk_end);
+            std::vector<bool> populate;
+            populate.reserve(experts.size());
+            for (std::size_t index = chunk_begin; index < chunk_end; ++index) {
+                populate.push_back(!tail_seed || index >= population_begin);
+            }
+            if (source_service_) {
+                submit_chunk(layer, experts, populate);
+            }
+            for (std::size_t index = 0; index < experts.size(); ++index) {
+                service_expert(layer, experts[index], populate[index]);
+            }
+            require(pending_source_.empty(),
+                    "bounded source chunk ended with unconsumed reads");
+        }
+    }
+
+    void service_expert(int layer, int expert, bool populate_on_miss) {
+        if (!cache_enabled_) {
+            materialize(layer, expert, false, 0);
+            return;
+        }
+        ++cache_clock_;
+        ++cache_accesses_;
+        if (current_step_ == 0) {
+            ++prefill_cache_accesses_;
+        } else {
+            ++decode_cache_accesses_;
+        }
+        const std::size_t hit_slot = find_cache_entry(layer, expert);
+        if (hit_slot != cache_entries_[layer].size()) {
+            CacheEntry & entry = cache_entries_[layer][hit_slot];
+            require(entry.valid && entry.expert == expert && entry.generation > 0,
+                    "compact cache entry identity/generation is stale");
+            copy_to_destination(layer, expert, cache_slot_pointer(layer, hit_slot));
+            entry.last_use = cache_clock_;
+            ++cache_hits_;
+            if (current_step_ == 0) {
+                ++prefill_cache_hits_;
+            } else {
+                ++decode_cache_hits_;
+            }
+            return;
+        }
+        ++cache_misses_;
+        if (current_step_ == 0) {
+            ++prefill_cache_misses_;
+        } else {
+            ++decode_cache_misses_;
+        }
+        if (!populate_on_miss) {
+            ++prefill_tail_population_skips_;
+        }
+        const std::size_t victim = populate_on_miss ? choose_cache_victim(layer) : 0;
+        materialize(layer, expert, populate_on_miss, victim);
+    }
+
+    void materialize(int layer, int expert, bool populate_cache, std::size_t cache_slot) {
+        const Id object = object_id(layer, expert);
+        plan_->declare_lifetime(object, 0, 0);
+        std::size_t window_index = 0;
+        SourceTicket source_ticket;
+        if (source_service_) {
+            const auto pending = pending_source_.find(expert);
+            require(pending != pending_source_.end(),
+                    "bounded source miss has no submitted read");
+            source_ticket = pending->second.ticket;
+            window_index = pending->second.window_index;
+        }
+        const Id window_id = kWindowId + static_cast<Id>(window_index);
+        const auto window = plan_->start_read(object, window_id);
+        auto begin = Clock::now();
+        if (source_service_) {
+            const Json before = snapshot_json(plan_->snapshot());
+            try {
+                source_service_->await(source_ticket);
+            } catch (const std::exception & error) {
+                const bool expected = !fault_triggered_ && args_.fault == "short_read";
+                if (!expected) {
+                    throw;
+                }
+                source_service_->retire(source_ticket);
+                pending_source_.erase(expert);
+                drain_unstarted_source_tasks();
+                record_fault(
+                    "short_successful_read", true, error.what(),
+                    {{"before", before},
+                     {"after", snapshot_json(plan_->snapshot())},
+                     {"h2d_started", false},
+                     {"host_ready_published", false}});
+                throw std::runtime_error("injected fatal source fault: short_read");
+            }
+            pending_source_.erase(expert);
+            if (args_.fault == "stale_completion" && !fault_triggered_ &&
+                stale_window_.has_value() &&
+                stale_window_->window_id == window.window_id &&
+                stale_window_->generation < window.generation) {
+                const Json stale_before = snapshot_json(plan_->snapshot());
+                try {
+                    plan_->complete_read(*stale_window_, ++event_id_, bundle_bytes_);
+                } catch (const std::exception & error) {
+                    source_service_->mark_retirable(source_ticket);
+                    source_service_->retire(source_ticket);
+                    drain_unstarted_source_tasks();
+                    record_fault(
+                        "late_stale_completion_after_reassignment", true,
+                        error.what(),
+                        {{"before", stale_before},
+                         {"after", snapshot_json(plan_->snapshot())},
+                         {"stale_window_id", stale_window_->window_id},
+                         {"stale_generation", stale_window_->generation},
+                         {"current_generation", window.generation},
+                         {"h2d_started", false},
+                         {"host_ready_published", false}});
+                    throw std::runtime_error("injected fatal stale completion");
+                }
+                throw std::runtime_error("stale completion was unexpectedly accepted");
+            }
+        } else {
+            read_exact(fd_, layers_[layer].gate.source_offset + expert * gate_bytes_,
+                       host_window_pointer(0), gate_bytes_);
+            read_exact(fd_, layers_[layer].down.source_offset + expert * down_bytes_,
+                       host_window_pointer(0) + gate_bytes_, down_bytes_);
+            read_exact(fd_, layers_[layer].scale.source_offset + expert * scale_bytes_,
+                       host_window_pointer(0) + gate_bytes_ + down_bytes_, scale_bytes_);
+        }
+        if (!source_service_ && args_.drop_source_cache) {
+            const std::array<std::pair<std::uint64_t, std::uint64_t>, 3> ranges{{
+                {layers_[layer].gate.source_offset + expert * gate_bytes_, gate_bytes_},
+                {layers_[layer].down.source_offset + expert * down_bytes_, down_bytes_},
+                {layers_[layer].scale.source_offset + expert * scale_bytes_, scale_bytes_},
+            }};
+            for (const auto & [offset, bytes] : ranges) {
+                const int status = posix_fadvise(fd_, static_cast<off_t>(offset),
+                                                 static_cast<off_t>(bytes),
+                                                 POSIX_FADV_DONTNEED);
+                require(status == 0, "source cache discard failed: " +
+                                         std::string(std::strerror(status)));
+                ++source_cache_advice_calls_;
+                source_cache_advice_bytes_ += bytes;
+            }
+        }
+        auto end = Clock::now();
+        timings_.source_ns += elapsed_ns(begin, end);
+        plan_->complete_read(window, ++event_id_, bundle_bytes_);
+
+        const auto copy = plan_->begin_copy(window, kSlotId, 0);
+        if (source_service_) {
+            source_service_->begin_h2d(source_ticket, bundle_bytes_);
+        }
+        begin = Clock::now();
+        ggml_backend_tensor_set(plan_tensor_, host_window_pointer(window_index),
+                                0, bundle_bytes_);
+        ggml_backend_synchronize(backend_);
+        end = Clock::now();
+        timings_.h2d_ns += elapsed_ns(begin, end);
+        plan_->complete_copy(copy, ++event_id_, bundle_bytes_);
+        if (source_service_) {
+            source_service_->complete_h2d(source_ticket, bundle_bytes_, event_id_);
+        }
+        const auto consumer = plan_->acquire(object, 0);
+        if (args_.fault == "held_consumer" && !fault_triggered_) {
+            expect_nonfatal_rejection(
+                "recycle_with_held_consumer",
+                [this, &window] { plan_->recycle_window(window); },
+                {{"consumer_ticket_id", consumer.ticket_id},
+                 {"window_id", window.window_id}});
+        }
+
+        const char * source = static_cast<const char *>(plan_tensor_->data);
+        copy_to_destination(layer, expert, source);
+
+        if (populate_cache) {
+            CacheEntry & entry = cache_entries_[layer][cache_slot];
+            const bool evicted = entry.valid;
+            begin = Clock::now();
+            copy_d2d(cache_slot_pointer(layer, cache_slot), source, bundle_bytes_);
+            synchronize_d2d();
+            timings_.cache_fill_ns += elapsed_ns(begin, Clock::now());
+            entry.expert = expert;
+            entry.last_use = cache_clock_;
+            entry.generation = ++cache_generation_;
+            entry.valid = true;
+            ++cache_populations_;
+            cache_evictions_ += evicted ? 1 : 0;
+            update_cache_occupancy(layer);
+        }
+
+        plan_->complete(consumer, ++event_id_);
+        plan_->release_slot(kSlotId);
+        plan_->recycle_window(window);
+        if (source_service_) {
+            source_service_->retire(source_ticket);
+        }
+        if (args_.fault == "stale_completion" && !stale_window_.has_value()) {
+            stale_window_ = window;
+        }
+        ++materializations_;
+    }
+
+    const Args & args_;
+    llama_model * model_;
+    std::array<LayerGeometry, kLayers> layers_{};
+    std::uint64_t gate_bytes_ = 0;
+    std::uint64_t down_bytes_ = 0;
+    std::uint64_t scale_bytes_ = 0;
+    std::uint64_t bundle_bytes_ = 0;
+    std::uint64_t source_file_bytes_ = 0;
+    std::uint64_t managed_expert_inventory_bytes_ = 0;
+    std::uint64_t shared_destination_raw_bytes_ = 0;
+    int fd_ = -1;
+    std::vector<std::uint8_t> host_windows_;
+    bool host_windows_registered_ = false;
+    std::unique_ptr<SourceService> source_service_;
+    std::unordered_map<int, PendingSource> pending_source_;
+    ggml_backend_t backend_ = nullptr;
+    ggml_context * plan_ctx_ = nullptr;
+    ggml_tensor * plan_tensor_ = nullptr;
+    ggml_backend_buffer_t plan_buffer_ = nullptr;
+    std::uint64_t plan_buffer_bytes_ = 0;
+    std::unique_ptr<Engine> plan_;
+    bool cache_enabled_ = false;
+    void * cache_data_ = nullptr;
+    std::uint64_t cache_bytes_ = 0;
+    std::array<std::vector<CacheEntry>, kLayers> cache_entries_{};
+    std::vector<std::uint64_t> max_cache_occupancy_;
+    bool step_active_ = false;
+    bool shutdown_ = false;
+    std::uint64_t current_step_ = 0;
+    std::uint64_t event_id_ = 0;
+    std::uint64_t materializations_ = 0;
+    std::uint64_t source_cache_advice_calls_ = 0;
+    std::uint64_t source_cache_advice_bytes_ = 0;
+    std::uint64_t cache_clock_ = 0;
+    std::uint64_t cache_generation_ = 0;
+    std::uint64_t cache_accesses_ = 0;
+    std::uint64_t cache_hits_ = 0;
+    std::uint64_t cache_misses_ = 0;
+    std::uint64_t prefill_cache_accesses_ = 0;
+    std::uint64_t prefill_cache_hits_ = 0;
+    std::uint64_t prefill_cache_misses_ = 0;
+    std::uint64_t decode_cache_accesses_ = 0;
+    std::uint64_t decode_cache_hits_ = 0;
+    std::uint64_t decode_cache_misses_ = 0;
+    std::uint64_t cache_populations_ = 0;
+    std::uint64_t cache_evictions_ = 0;
+    std::uint64_t prefill_tail_population_skips_ = 0;
+    std::uint64_t cache_stale_rejections_ = 0;
+    std::uint64_t cache_premature_reuse_rejections_ = 0;
+    std::set<int> layers_seen_;
+    std::string callback_error_;
+    Timings timings_;
+    Json route_events_ = Json::array();
+    Json pre_shutdown_ = nullptr;
+    Json shutdown_snapshot_ = nullptr;
+    bool fault_triggered_ = false;
+    bool fault_fatal_ = false;
+    std::string fault_stage_;
+    std::string fault_rejection_;
+    Json fault_details_ = Json::object();
+    Json fault_terminal_snapshot_ = nullptr;
+    Json fault_terminal_source_ = nullptr;
+    std::optional<PlanWindowTicket> stale_window_;
+};
+
+std::string format_prompt(const llama_model * model, const std::string & user_prompt) {
+    const llama_chat_message message{"user", user_prompt.c_str()};
+    const char * chat_template = llama_model_chat_template(model, nullptr);
+    require(chat_template != nullptr, "official model has no chat template");
+    std::vector<char> buffer(std::max<std::size_t>(4096, user_prompt.size() * 4));
+    int32_t length = llama_chat_apply_template(chat_template, &message, 1, true,
+                                               buffer.data(), buffer.size());
+    if (length < 0) {
+        // The official Gemma 4 template uses full Jinja constructs that the
+        // lightweight public helper does not implement.  This is its exact
+        // one-user, no-tools, thinking-disabled expansion, excluding BOS
+        // because llama_tokenize adds it below.
+        return "<|turn>user\n" + user_prompt +
+               "<turn|>\n<|turn>model\n<|channel>thought\n<channel|>";
+    }
+    if (length > static_cast<int32_t>(buffer.size())) {
+        buffer.resize(length);
+        length = llama_chat_apply_template(chat_template, &message, 1, true,
+                                           buffer.data(), buffer.size());
+        require(length >= 0 && length <= static_cast<int32_t>(buffer.size()),
+                "chat template resize failed");
+    }
+    return std::string(buffer.data(), length);
+}
+
+std::vector<llama_token> tokenize(const llama_vocab * vocab, const std::string & prompt) {
+    const int32_t count = llama_tokenize(vocab, prompt.data(), prompt.size(), nullptr, 0,
+                                         true, true);
+    require(count < 0, "token count query failed");
+    std::vector<llama_token> tokens(static_cast<std::size_t>(-count));
+    const int32_t actual = llama_tokenize(vocab, prompt.data(), prompt.size(), tokens.data(),
+                                          tokens.size(), true, true);
+    require(actual == static_cast<int32_t>(tokens.size()), "prompt tokenization failed");
+    return tokens;
+}
+
+bool resident_router_callback(ggml_tensor * tensor, bool ask, void *) {
+    int layer = -1;
+    if (sscanf(ggml_get_name(tensor), "ffn_moe_topk-%d", &layer) != 1 ||
+        layer < 0 || layer >= kLayers) {
+        return false;
+    }
+    (void)ask;
+    return true;
+}
+
+std::string token_piece(const llama_vocab * vocab, llama_token token) {
+    std::array<char, 256> local{};
+    int32_t count = llama_token_to_piece(vocab, token, local.data(), local.size(), 0, true);
+    if (count >= 0) {
+        return std::string(local.data(), count);
+    }
+    std::vector<char> expanded(static_cast<std::size_t>(-count));
+    count = llama_token_to_piece(vocab, token, expanded.data(), expanded.size(), 0, true);
+    require(count >= 0, "token-to-piece conversion failed");
+    return std::string(expanded.data(), count);
+}
+
+Json model_memory_json(const llama_model * model) {
+    Json result = Json::array();
+    for (const auto & [buffer_type, bytes] : model->memory_breakdown()) {
+        result.push_back({
+            {"buffer_type", ggml_backend_buft_name(buffer_type)},
+            {"bytes", bytes},
+        });
+    }
+    return result;
+}
+
+Json run_request(const Args & args) {
+    const ProcessIo io_begin = process_io();
+    const auto initialization_begin = Clock::now();
+    ggml_backend_load_all_from_path(args.backend_dir.c_str());
+    const bool plan_arm = args.arm == "plan_staged_candidate" ||
+                          args.arm == "plan_cached_candidate" ||
+                          args.arm == "fault_canary";
+    if (plan_arm) {
+        require(setenv("MSI_GEMMA4_STREAM_EXPERTS", "1", 1) == 0,
+                "cannot enable streamed expert binding");
+    } else {
+        unsetenv("MSI_GEMMA4_STREAM_EXPERTS");
+    }
+    llama_model_params model_params = llama_model_default_params();
+    model_params.n_gpu_layers = args.n_gpu_layers;
+    model_params.use_mmap = !args.no_mmap;
+    llama_model * model = llama_model_load_from_file(args.model.c_str(), model_params);
+    require(model != nullptr, "model load failed");
+
+    std::unique_ptr<GemmaPlanStreamer> streamer;
+    std::unique_ptr<GemmaRouteObserver> route_observer;
+    if (plan_arm) {
+        streamer = std::make_unique<GemmaPlanStreamer>(args, model);
+    } else if (args.arm == "resident_trace_control") {
+        route_observer = std::make_unique<GemmaRouteObserver>();
+    }
+    const llama_vocab * vocab = llama_model_get_vocab(model);
+    const std::string formatted = format_prompt(model, args.prompt);
+    std::vector<llama_token> prompt_tokens = tokenize(vocab, formatted);
+    require(prompt_tokens.size() >= 8, "natural request prompt is unexpectedly small");
+
+    llama_context_params context_params = llama_context_default_params();
+    context_params.n_ctx = std::max<std::uint32_t>(256, prompt_tokens.size() + args.n_predict + 8);
+    context_params.n_batch = prompt_tokens.size();
+    context_params.n_ubatch = prompt_tokens.size();
+    context_params.no_perf = false;
+    if (streamer) {
+        context_params.cb_eval = GemmaPlanStreamer::callback;
+        context_params.cb_eval_user_data = streamer.get();
+    } else if (route_observer) {
+        context_params.cb_eval = GemmaRouteObserver::callback;
+        context_params.cb_eval_user_data = route_observer.get();
+    } else if (args.arm == "resident_observed_control") {
+        context_params.cb_eval = resident_router_callback;
+    }
+    llama_context * context = llama_init_from_model(model, context_params);
+    require(context != nullptr, "context initialization failed");
+    const Json model_memory = model_memory_json(model);
+
+    llama_sampler * sampler = llama_sampler_chain_init(llama_sampler_chain_default_params());
+    require(sampler != nullptr, "sampler initialization failed");
+    llama_sampler_chain_add(sampler, llama_sampler_init_greedy());
+    const auto initialization_end = Clock::now();
+
+    std::ofstream logits(args.logits, std::ios::binary | std::ios::trunc);
+    require(static_cast<bool>(logits), "cannot open logits output");
+    const int32_t vocabulary_size = llama_vocab_n_tokens(vocab);
+    std::vector<llama_token> generated;
+    std::string response;
+    std::uint64_t prefill_ns = 0;
+    std::uint64_t decode_ns = 0;
+    std::uint64_t step = 0;
+    std::uint64_t logits_rows = 0;
+    bool fatal_fault = false;
+    llama_batch batch = llama_batch_get_one(prompt_tokens.data(), prompt_tokens.size());
+    while (generated.size() < static_cast<std::size_t>(args.n_predict)) {
+        if (streamer) {
+            streamer->begin_step(step + 1);
+        }
+        if (route_observer) {
+            route_observer->begin_step(step);
+        }
+        const auto decode_begin = Clock::now();
+        const int status = llama_decode(context, batch);
+        const auto decode_end = Clock::now();
+        if (streamer && streamer->fatal_fault_triggered()) {
+            fatal_fault = true;
+            break;
+        }
+        if (status != 0) {
+            if (streamer) {
+                streamer->abort_step();
+            }
+            throw std::runtime_error("stock llama_decode failed with status " + std::to_string(status));
+        }
+        if (streamer) {
+            streamer->finish_step();
+        }
+        if (route_observer) {
+            route_observer->finish_step();
+        }
+        if (step == 0) {
+            prefill_ns += elapsed_ns(decode_begin, decode_end);
+        } else {
+            decode_ns += elapsed_ns(decode_begin, decode_end);
+        }
+        float * current_logits = llama_get_logits_ith(context, -1);
+        require(current_logits != nullptr, "stock runtime returned no logits");
+        logits.write(reinterpret_cast<const char *>(current_logits),
+                     static_cast<std::streamsize>(vocabulary_size * sizeof(float)));
+        require(static_cast<bool>(logits), "logits write failed");
+        ++logits_rows;
+        const llama_token token = llama_sampler_sample(sampler, context, -1);
+        if (llama_vocab_is_eog(vocab, token)) {
+            break;
+        }
+        generated.push_back(token);
+        response += token_piece(vocab, token);
+        batch = llama_batch_get_one(&generated.back(), 1);
+        ++step;
+    }
+    logits.close();
+    require(file_size(args.logits) ==
+                logits_rows * static_cast<std::uint64_t>(vocabulary_size) * sizeof(float),
+            "logits output size mismatch");
+
+    llama_memory_clear(llama_get_memory(context), true);
+    if (streamer && !fatal_fault) {
+        streamer->shutdown();
+    }
+    const auto shutdown_begin = Clock::now();
+    Json plan_report = streamer ? streamer->report() : Json(nullptr);
+    Json injected_fault_report = streamer ? streamer->fault_report() : Json(nullptr);
+    Json route_trace = route_observer ? route_observer->report() : Json(nullptr);
+    llama_sampler_free(sampler);
+    llama_free(context);
+    streamer.reset();
+    llama_model_free(model);
+    const auto shutdown_end = Clock::now();
+    const ProcessIo io_end = process_io();
+
+    return {
+        {"schema_version", 1},
+        {"artifact", "gemma4_plan_complete_request_arm"},
+        {"arm", args.arm},
+        {"fault", injected_fault_report},
+        {"fault_acceptance", {
+            {"fatal_fault", fatal_fault},
+            {"accepted_tokens_after_fault", fatal_fault ? generated.size() : 0},
+            {"accepted_logits_after_fault", fatal_fault ? logits_rows : 0},
+        }},
+        {"consumer", {
+            {"base_runtime_commit", "40d5358d3c730b81729ba81cd5c44ed596d02510"},
+            {"runtime_adapter_commit", "05f332a0b031aa18041622e26f37e6a7c1fe82f0"},
+            {"graph", "stock_gemma4_llama_decode"},
+            {"router", "stock_ffn_moe_topk"},
+            {"expert_consumer", "stock_ggml_mul_mat_id_q4_0"},
+            {"reduction", "stock_gemma4_moe_reduction"},
+            {"scheduler_boundary", args.arm == "resident_control" ?
+                "ordinary_unsplit" : "pause_after_each_ffn_moe_topk"},
+        }},
+        {"model_memory", model_memory},
+        {"workload", {
+            {"prompt", args.prompt},
+            {"prompt_formatter", "official_gemma4_one_user_no_tools_thinking_disabled_expansion"},
+            {"formatted_prompt_bytes", formatted.size()},
+            {"prompt_tokens", prompt_tokens.size()},
+            {"n_predict_limit", args.n_predict},
+            {"n_gpu_layers", args.n_gpu_layers},
+            {"use_mmap", !args.no_mmap},
+            {"generated_tokens", generated},
+            {"generated_token_count", generated.size()},
+            {"response", response},
+            {"logits_path", args.logits},
+            {"logits_bytes", file_size(args.logits)},
+            {"vocabulary_size", vocabulary_size},
+        }},
+        {"timing_ns", {
+            {"initialization", elapsed_ns(initialization_begin, initialization_end)},
+            {"prefill", prefill_ns},
+            {"decode", decode_ns},
+            {"reset_and_shutdown", elapsed_ns(shutdown_begin, shutdown_end)},
+        }},
+        {"plan", plan_report},
+        {"route_trace", route_trace},
+        {"process_io", process_io_delta(io_begin, io_end)},
+    };
+}
+
+void write_json(const std::string & path, const Json & value) {
+    std::ofstream output(path, std::ios::trunc);
+    require(static_cast<bool>(output), "cannot open JSON output: " + path);
+    output << value.dump(2) << '\n';
+    require(static_cast<bool>(output), "cannot write JSON output: " + path);
+}
+
+void preflight(const Args & args) {
+    require(file_size(args.model) == kOfficialModelBytes, "official model byte size mismatch");
+    require(file_size(args.backend_dir + "/libllama.so") > 0,
+            "private libllama is missing");
+    require(file_size(args.backend_dir + "/libggml-cuda.so.0.12.0") > 0,
+            "private CUDA backend is missing");
+    write_json(args.output, {
+        {"schema_version", 1},
+        {"artifact", "gemma4_plan_complete_request_preflight"},
+        {"status", "PASS"},
+        {"arm", args.arm},
+        {"fault", args.fault},
+        {"model_bytes", kOfficialModelBytes},
+        {"layers", kLayers},
+        {"experts", kExperts},
+        {"experts_used", kExpertsUsed},
+        {"n_predict", args.n_predict},
+        {"cache_capacity", args.cache_capacity},
+        {"n_gpu_layers", args.n_gpu_layers},
+        {"drop_source_cache", args.drop_source_cache},
+        {"bounded_source", args.bounded_source},
+        {"source_direct", args.source_direct},
+        {"source_in_flight", args.source_in_flight},
+        {"use_mmap", !args.no_mmap},
+        {"prompt", args.prompt},
+    });
+}
+
+}  // namespace
+
+int main(int argc, char ** argv) {
+    try {
+        const Args args = parse_args(argc, argv);
+        if (args.preflight) {
+            preflight(args);
+        } else {
+            write_json(args.output, run_request(args));
+        }
+        return 0;
+    } catch (const std::exception & error) {
+        std::cerr << "gemma4_plan_runtime_adapter: " << error.what() << '\n';
+        return 1;
+    }
+}

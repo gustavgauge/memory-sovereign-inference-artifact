@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "decision_id": "qwen3-next-integrated-fault-campaign",
+  "classification": "decision-bearing",
+  "status": "FROZEN_FOR_EXECUTION",
+  "decision_consumer": "decide whether Plan lifecycle identity and ownership checks add tested fail-closed behavior beyond the Qwen3-Next asynchronous performance result",
+  "objective": "Execute one real-adapter, real-GPU no-fault control and nine deterministic fault cells at 512+8 with the cache disabled, preserving every negative and accepting the integrated lifecycle claim only if every declared transition behaves as predicted.",
+  "claim_boundary": "One RTX 3090, one Qwen3-Next Q4_K_M artifact, one 512-token truncation of the frozen natural prompt, eight greedy fixed-horizon outputs, zero cache, one binary, and the exact deterministic hooks below. This tests named transitions; it does not prove race freedom, concurrency safety, serving isolation, or general fault tolerance.",
+  "model": {
+    "path": "/data/ai/models/gguf/qwen3-next-80b-a3b-instruct/Qwen3-Next-80B-A3B-Instruct-Q4_K_M.gguf",
+    "sha256": "d103b2733ec1012a52d01edda66b7e5c24ae50508c9f99f5297ea459ef3c061a",
+    "bytes": 48410988384
+  },
+  "runtime_identity": {
+    "private_worktree": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-llama",
+    "base_commit": "8ef78e644f559db4e8716b59bf76b8e11619337d",
+    "adapter_commit": "7206605099424f7ad7ca78c2783a60ec60f810f4",
+    "backend_dir": "/home/krooksn/ai/research/worktrees/memory-sovereign-inference-qwen3-next-llama/build-msi-sm86/bin",
+    "graph": "stock_qwen3_next_llama_decode"
+  },
+  "implementation": {
+    "binary_path": "/data/ai/runs/memory-sovereign-inference/20260820T-qwen3-next-fault-campaign-development/bin/qwen3-next-fault-adapter",
+    "binary_sha256": "5083ccd5b1fafc2468c1211401244366f0347e3671d3e3325ad602c9f56296ce",
+    "adapter_path": "src/adapters/qwen3_next_plan_runtime_adapter.cpp",
+    "adapter_sha256": "029ed3af631d12d845455249cc4738ab3944b4f6eb2809389859bc771e3c9150",
+    "bounded_source_path": "src/memory/bounded_source_service.hpp",
+    "bounded_source_sha256": "1c74a7cfba92eb6c1ae9932b598458af341b0304d2b5c81b4d57050d015e51a5",
+    "validator_path": "tools/validate_qwen3_next_fault_cell.py",
+    "validator_sha256": "07500dc96ac535bfcfa1684ee654d1519c53b22ae65d29bf0046ddb7ba69c677",
+    "observer_path": "tools/observe_qwen3_next_plan_consumer.py",
+    "observer_sha256": "76ffc0f0ca62edba523721505ab9025d655a508c78ee7ccb9f4b87a8c832b45e",
+    "launcher_path": "tools/run_qwen3_next_bounded_cell.sh",
+    "launcher_sha256": "b7973f298aa8ef36c8c966b9ed0f7128ef6531f038c6783ac82a1ca70b1c1032"
+  },
+  "hardware": {
+    "gpu_product": "NVIDIA GeForce RTX 3090",
+    "gpu_uuid": "GPU-38bca229-3688-c0be-cbdc-c24bfedbddce",
+    "physical_board_bytes": 25769803776,
+    "gpu_board_budget_bytes": 24696061952,
+    "host_cgroup_max_bytes": 11811160064,
+    "host_cgroup_swap_max_bytes": 0,
+    "minimum_margin_bytes": 536870912,
+    "required_foreign_compute_pids": []
+  },
+  "workload": {
+    "prompt_path": "/data/ai/capsules/memory-sovereign-inference/20260817-qwen-natural-utility-v2-c6b7382/preparation/prompts/lb_2wikimqa_1.txt",
+    "prompt_sha256": "5989ca040b0e3e3f45215ef4dfb6b7f0e8581b410e0bda5cfdf8e65b32efb148",
+    "prompt_tokens": 512,
+    "output_tokens": 8,
+    "n_ubatch": 512,
+    "cache_capacity": 0,
+    "source_in_flight": 8,
+    "sampling": "greedy with every EOG token masked to negative infinity for exactly eight outputs"
+  },
+  "ordered_cells": [
+    "none",
+    "short_read",
+    "eio",
+    "out_of_order",
+    "stale_completion",
+    "wrong_object",
+    "held_consumer",
+    "reset_outstanding",
+    "shutdown_live_consumer",
+    "partial_bundle"
+  ],
+  "faults": {
+    "none": "ordinary eight-window asynchronous control; eight outputs and all ledgers must close",
+    "short_read": "first graph-demanded source operation returns one byte short with a nonnegative completion; no Plan ready state or H2D may publish",
+    "eio": "first graph-demanded source operation returns deterministic EIO; no Plan ready state or H2D may publish",
+    "out_of_order": "the first two matching-window source tickets complete in reverse submission order; all outputs, logits, routes, and final state must remain control-exact",
+    "stale_completion": "after a window is recycled and reassigned, its earlier Plan window generation completes late; it must reject before H2D",
+    "wrong_object": "a completion carries a different demanded object identity; it must reject before H2D",
+    "held_consumer": "window recycle is attempted with a live real graph consumer; it must reject, then succeed through ordinary release and remain control-exact",
+    "reset_outstanding": "reset is attempted while the first demanded source read is outstanding; it must reject without advancing the epoch, then remain control-exact",
+    "shutdown_live_consumer": "shutdown is attempted while a real graph consumer is live; it must reject, then remain control-exact and close ordinarily",
+    "partial_bundle": "the first of three demanded tensor extents completes and the next extent fails; the bundle must never publish ready or start H2D"
+  },
+  "fatal_faults": [
+    "short_read",
+    "eio",
+    "stale_completion",
+    "wrong_object",
+    "partial_bundle"
+  ],
+  "recoverable_faults": [
+    "out_of_order",
+    "held_consumer",
+    "reset_outstanding",
+    "shutdown_live_consumer"
+  ],
+  "interpretation_rule": "A fatal cell passes only with the declared rejection, zero accepted tokens/logits, zero H2D publication, one explicitly accounted Plan fault window, and a fully drained source executor. A recoverable cell passes only with the declared rejection or ordering, control-exact tokens/logits/routes/state, clean resources, and complete lifecycle closure. Preserve any valid negative; do not alter hooks or order after observing claim cells.",
+  "repetition_rule": "One deterministic cell per declared mode. No outcome-selected repetition; a system-fault rerun requires documented repair, exact host preflight, and a new identity.",
+  "success_condition": "All ten Qwen cells are evidence-valid under the declared outcomes. Cross-adapter wording additionally requires the four representative Gemma cells; Qwen-only success supports only tested fail-closed behavior in the Qwen adapter.",
+  "next_decision": "If all Qwen cells pass, execute no-fault, short, stale, and held-consumer representatives through the real Gemma adapter before publication wording. Qwen3.6 MTP and the full Gemma performance population remain separate deferred campaigns."
+}

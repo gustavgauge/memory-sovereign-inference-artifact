@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "claim_id": "C2",
+  "title": "Matched direct-source comparison",
+  "evidence_cutoff": "2026-08-21",
+  "workload": {
+    "model": "Qwen3-Next Q4_K_M",
+    "prompt_tokens": 8192,
+    "generated_outputs": 128,
+    "pairs": 6,
+    "execution_order": ["P", "D1", "F1", "D2", "F2", "D3", "F3", "D4", "F4", "D5", "F5", "D6", "F6"]
+  },
+  "arms": {
+    "P": "buffered source",
+    "D": "blocking one-window direct source",
+    "F": "complete eight-window asynchronous direct-source component"
+  },
+  "admission": {
+    "P_resource_admissible": false,
+    "P_complete_cgroup_peak_bytes": 11811160064,
+    "P_memory_max_events": 33481,
+    "D_and_F_all_oracle_exact": true,
+    "D_and_F_all_resource_admissible": true,
+    "F_all_lifecycle_admissible": true
+  },
+  "paired_result": {
+    "geometric_F_over_D_wall_ratio": 0.32291333601697325,
+    "paired_log_95_interval": [0.3200896627610479, 0.3257619183267789],
+    "reciprocal_D_over_F": 3.0968061348430562,
+    "physical_source_bytes_per_decode_output_D": 97667442.8976378,
+    "physical_source_bytes_per_decode_output_F": 97667442.8976378
+  },
+  "lifecycle": {
+    "F_submissions": 333120,
+    "F_completions": 333120,
+    "F_peak_in_flight": 8,
+    "F_dynamic_direct_allocations": 0,
+    "F_free_windows_at_every_close": 8
+  },
+  "interpretation": "The F-versus-D contrast jointly changes queue depth, overlap, and lifecycle implementation; it does not isolate bookkeeping from eight-way concurrency.",
+  "provenance": {
+    "result_record_sha256": "d03b1b254929b87c01cfd6471df26ea6b3e706f96bca7602ed0deb7570a34f04",
+    "compact_replay_observations": "evidence/replay/C2/campaign-evaluation.json"
+  }
+}

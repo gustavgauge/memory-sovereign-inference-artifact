@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "claim_id": "C4",
+  "title": "Qwen3.6 multi-token-prediction temporal amortization",
+  "workload": {"model": "Qwen3.6", "prompt_tokens": 8192, "generated_outputs": 512},
+  "identities": {
+    "binary_sha256": "4d64fbd08dda2dc2377c506bf35279cd54405a953d9b479999421d9d1cdf8a91",
+    "target_model_sha256": "f0863123e9f79c1f43bb6d4f2d7bc64541a4e92f7242c3ddae649731c03cdd09",
+    "composite_model_sha256": "79e80b7a2237412aad13bdd40151ab0c04a104429182f9b719f0bb47d181b7cd",
+    "prompt_sha256": "7d294d19be97936eadd4ee056b3c9d1f14e1dbc60561effb7f4d38e77005daef"
+  },
+  "exactness": {
+    "token_ids_equal": true,
+    "complete_logits_equal": true,
+    "full_logit_rows_checked": 723,
+    "first_mismatch_call": -1,
+    "first_mismatch_lane": -1,
+    "hybrid_state_equal_after_every_commit": true,
+    "shared_prefix_hash_before": 62625210368025683,
+    "shared_prefix_hash_after": 62625210368025683,
+    "shared_prefix_immutable": true,
+    "terminal_weight_exact": true,
+    "oracle_output_token_hash": 8465689571424498354,
+    "output_token_hash": 8465689571424498354,
+    "oracle_surface_hash": 15486030063779112730
+  },
+  "result": {
+    "target_traversals": 104,
+    "decode_outputs_traversed": 511,
+    "committed_outputs_per_target_traversal": 4.913461538461538,
+    "oracle_accepted_drafts": 407,
+    "full_accepts": 51,
+    "physical_commits": 104,
+    "state_stages": 728,
+    "loser_rebases": 624,
+    "end_to_end_output_tokens_per_second": 12.015576994
+  },
+  "timing": {
+    "request_milliseconds": 42611.3536,
+    "time_to_first_token_milliseconds": 7608.425123,
+    "generation_milliseconds": 35002.928477,
+    "generation_output_tokens_per_second": 14.598778509,
+    "end_to_end_output_tokens_per_second": 12.015576994
+  },
+  "resources": {
+    "complete_host_peak_bytes": 8050614272,
+    "complete_host_ceiling_bytes": 8053063680,
+    "complete_host_margin_bytes": 2449408,
+    "whole_board_gpu_peak_bytes": 12335448064,
+    "whole_board_gpu_ceiling_bytes": 12348030976,
+    "whole_board_gpu_margin_bytes": 12582912,
+    "swap_peak_bytes": 0,
+    "memory_event_deltas": 0
+  },
+  "scope": "One complete request at one fixed model, workload, runtime, and system identity.",
+  "provenance": {"result_record_sha256": "27897dcba5b26d3a06efd992d14fb64c77e29a06c8e8bcc3c7d4a591414fc491"}
+}

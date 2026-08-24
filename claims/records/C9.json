@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "claim_id": "C9",
+  "title": "Cross-model product comparison",
+  "population": {"tasks": 5, "qwen3_next_correct": 5, "resident_qwen36_correct": 5},
+  "observations": [
+    {"task": "schema_rate_correction", "prompt_sha256": "627c2abbac66ea9b722c127246ec166baf518f09ca33a273536131097738d9cf", "severity": 1, "qwen3_next": {"correct": true, "completion_seconds": 17.170424236, "first_useful_action_seconds": 11.438519968}, "resident_qwen36_primary": {"correct": false, "completion_seconds": 4.354142114, "first_useful_action_seconds": null}, "resident_qwen36_format_aligned": {"correct": true, "completion_seconds": 4.319306636, "first_useful_action_seconds": 0.422499938}},
+    {"task": "complete_cgroup_authority", "prompt_sha256": "ce85c02d78c715373cd8e96b013db4b901b6e4c63f0a5e09ecf8f643f6ed1d61", "severity": 2, "qwen3_next": {"correct": true, "completion_seconds": 19.593273942, "first_useful_action_seconds": 11.501088216}, "resident_qwen36_primary": {"correct": true, "completion_seconds": 4.315493378, "first_useful_action_seconds": 0.504454324}, "resident_qwen36_format_aligned": null},
+    {"task": "async_window_lifetime", "prompt_sha256": "6eaaa450953ead178ad15e71a1ebd79719b2755c821979d339d1e5a9a6707819", "severity": 3, "qwen3_next": {"correct": true, "completion_seconds": 32.621966395, "first_useful_action_seconds": 23.487738174}, "resident_qwen36_primary": {"correct": false, "completion_seconds": 5.75619545, "first_useful_action_seconds": null}, "resident_qwen36_format_aligned": {"correct": true, "completion_seconds": 5.701735771, "first_useful_action_seconds": 1.856408051}},
+    {"task": "append_only_registry_repair", "prompt_sha256": "dd88078f2a5cf1510eedccf2c89769ebf0977d84eaf6c0985a8f220f8b7fc6db", "severity": 2, "qwen3_next": {"correct": true, "completion_seconds": 15.864844323, "first_useful_action_seconds": 12.32236363}, "resident_qwen36_primary": {"correct": true, "completion_seconds": 4.798822275, "first_useful_action_seconds": 0.964036546}, "resident_qwen36_format_aligned": null},
+    {"task": "product_route_adjudication", "prompt_sha256": "97f87e53137639e70787332ba821bb48ce48f740bb7020877f628b2ab98d0671", "severity": 3, "qwen3_next": {"correct": true, "completion_seconds": 43.476087664, "first_useful_action_seconds": 36.206201072}, "resident_qwen36_primary": {"correct": true, "completion_seconds": 6.790943728, "first_useful_action_seconds": 2.974502005}, "resident_qwen36_format_aligned": null}
+  ],
+  "aggregation_rule": "Use the prespecified primary resident result when it is response-format valid; otherwise use the recorded format-aligned replacement for the same task. The comparison is descriptive and cross-model.",
+  "timing": {"qwen3_next_total_process_seconds": 128.72659656, "resident_qwen36_total_process_seconds": 25.926301788, "total_process_ratio": 4.965096742782696, "qwen3_next_time_to_first_useful_action_seconds": 94.95591106, "resident_qwen36_time_to_first_useful_action_seconds": 6.721900864, "time_to_first_useful_action_ratio": 14.126348034757331},
+  "scope": "Descriptive comparison on five response-format-aligned repository tasks; not general model-capability equivalence.",
+  "provenance": {"result_record_sha256": "8d34199fa70aa72f58196708ec95105db770baf2899532f3fd34acf29dd7cd34"}
+}

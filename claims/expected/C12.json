@@ -1,0 +1,7 @@
+{"claim":"C12","assertions":[
+  {"json_pointer":"/exactness/worker_validations_passed","op":"eq","value":true},
+  {"json_pointer":"/lifecycle/scheduled_objects_per_request","op":"eq","value":3384},
+  {"json_pointer":"/lifecycle/managed_host_windows","op":"eq","value":144},
+  {"json_pointer":"/lifecycle/managed_gpu_slots","op":"eq","value":8},
+  {"json_pointer":"/lifecycle/terminal_live_objects","op":"eq","value":0}
+]}

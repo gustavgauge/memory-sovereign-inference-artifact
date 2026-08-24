@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "path": "implementation/frozen/C1-contract/configs/qwen3-next-full64-oracle-confirmation.json",
+      "sha256": "738eabf5b23f9c63a3c68032c765b08ee4721357cf7eb640c91a388d37d6e87a"
+    },
+    {
+      "path": "implementation/frozen/C1-contract/tests/test_qwen3_next_full64_oracle_validator.py",
+      "sha256": "62a88475e41028faebd04842f51fb55636b5467bcd3c09a139512913af4c3801"
+    },
+    {
+      "path": "implementation/frozen/C1-contract/tools/validate_qwen3_next_full64_oracle.py",
+      "sha256": "4842faff0e3c1b440017d24aaa06c2d02ee78d93d642d6ff8979c3e7d97166c5"
+    },
+    {
+      "path": "implementation/frozen/C1/configs/qwen3-next-p2-thin-vertical.json",
+      "sha256": "243c70b97a7baf4d0eadaaea36f11d8f11f7ecc3936c2a36477a6839f20b1ddb"
+    },
+    {
+      "path": "implementation/frozen/C1/src/adapters/qwen3_next_plan_runtime_adapter.cpp",
+      "sha256": "ca637a7c84e336862273f98e2334529df1082fee97f4e0f5f6bf2ea1893e5bdb"
+    },
+    {
+      "path": "implementation/frozen/C1/src/memory/bounded_source_service.hpp",
+      "sha256": "7a2d224375a5b8eed25472e2d3e4d5fdb4937f31546219ddaa1a52020cdabbca"
+    },
+    {
+      "path": "implementation/frozen/C1/src/memory/plan_service_bridge.cpp",
+      "sha256": "c77f3f5a6fcd6b038592939da1dbc0e25e8e573fcc0acd1588a7066ec88c5f58"
+    },
+    {
+      "path": "implementation/frozen/C1/src/memory/plan_service_bundle.hpp",
+      "sha256": "2ebd9563a51fe5bb9db4bb2bc5ee0735061a7ccb3899715c67c1f93f2bed02fa"
+    },
+    {
+      "path": "implementation/frozen/C1/src/memory/plan_v0.hpp",
+      "sha256": "131c5d0036e0e7ea5f9bb6c8c9d60d5767ebb4472ffc4b3817213cf75e981639"
+    },
+    {
+      "path": "implementation/frozen/C1/tools/observe_qwen3_next_plan_consumer.py",
+      "sha256": "36a30a1860375dc13c2ea2bcd2da720ad0a6d098a33b4398e1f7bca31022d8fb"
+    },
+    {
+      "path": "implementation/frozen/C1/tools/replay_qwen3_next_cache.py",
+      "sha256": "a8ac3bf9852132a64672761c4ee49efd61e150159fdda4e810d24548fe421b66"
+    },
+    {
+      "path": "implementation/frozen/C1/tools/run_qwen3_next_bounded_cell.sh",
+      "sha256": "b7973f298aa8ef36c8c966b9ed0f7128ef6531f038c6783ac82a1ca70b1c1032"
+    },
+    {
+      "path": "implementation/frozen/C1/tools/validate_qwen3_next_canary.py",
+      "sha256": "b5e60a81b8082017ef9d512703232814358be774214c6ce4dcc29f07194b6007"
+    },
+    {
+      "path": "implementation/frozen/C1/tools/validate_qwen3_next_cell.py",
+      "sha256": "68316b3813d04b6d7490328d2c7fe8a451142221645cd6f227a48c3307476519"
+    },
+    {
+      "path": "implementation/frozen/C2/configs/qwen3-next-matched-control-churn.json",
+      "sha256": "d04a58d2880f2fa30535c7484c4d65c3b99e59afeaaf37ea80af67aa82503e2f"
+    },
+    {
+      "path": "implementation/frozen/C2/src/adapters/qwen3_next_plan_runtime_adapter.cpp",
+      "sha256": "b126d4b5882740ab4cde09c03b87834860b78b8fe46eb5898ed7b083ed15cc53"
+    },
+    {
+      "path": "implementation/frozen/C2/src/memory/bounded_source_service.hpp",
+      "sha256": "a5f1453eb07e73f433fd94229ef380902493316f5ba6042295f937161addf4c2"
+    },
+    {
+      "path": "implementation/frozen/C2/src/memory/plan_service_bridge.cpp",
+      "sha256": "c77f3f5a6fcd6b038592939da1dbc0e25e8e573fcc0acd1588a7066ec88c5f58"
+    },
+    {
+      "path": "implementation/frozen/C2/src/memory/plan_service_bundle.hpp",
+      "sha256": "2ebd9563a51fe5bb9db4bb2bc5ee0735061a7ccb3899715c67c1f93f2bed02fa"
+    },
+    {
+      "path": "implementation/frozen/C2/src/memory/plan_v0.hpp",
+      "sha256": "131c5d0036e0e7ea5f9bb6c8c9d60d5767ebb4472ffc4b3817213cf75e981639"
+    },
+    {
+      "path": "implementation/frozen/C2/tools/observe_qwen3_next_plan_consumer.py",
+      "sha256": "76ffc0f0ca62edba523721505ab9025d655a508c78ee7ccb9f4b87a8c832b45e"
+    },
+    {
+      "path": "implementation/frozen/C2/tools/replay_qwen3_next_cache.py",
+      "sha256": "a8ac3bf9852132a64672761c4ee49efd61e150159fdda4e810d24548fe421b66"
+    },
+    {
+      "path": "implementation/frozen/C2/tools/run_qwen3_next_bounded_cell.sh",
+      "sha256": "b7973f298aa8ef36c8c966b9ed0f7128ef6531f038c6783ac82a1ca70b1c1032"
+    },
+    {
+      "path": "implementation/frozen/C2/tools/validate_qwen3_next_canary.py",
+      "sha256": "4b8086e6acc3f5b769e7745f1574896fccf2290d3df70cb6986ae9c9a11d4750"
+    },
+    {
+      "path": "implementation/frozen/C2/tools/validate_qwen3_next_churn_cell.py",
+      "sha256": "bf58e38e403a7dce4119346f1905be821f2362d03688225d287b93da05534419"
+    },
+    {
+      "path": "implementation/frozen/C2/tools/validate_qwen3_next_product_cell.py",
+      "sha256": "302848bba4913affbf46e37c6c2821bffde720ad55fa8f767d006109ba9a222d"
+    },
+    {
+      "path": "implementation/frozen/C3-gemma/configs/gemma4-integrated-fault-transfer.json",
+      "sha256": "34284ba117ccae8ff694641d998b42b3db47622fb6b8285b574e7ec2ec7631d0"
+    },
+    {
+      "path": "implementation/frozen/C3-gemma/src/adapters/gemma4_plan_runtime_adapter.cpp",
+      "sha256": "88570b5db5a771ca89fcadcc7746039b7760c113f32636c2648b2361f9141fc4"
+    },
+    {
+      "path": "implementation/frozen/C3-gemma/src/memory/bounded_source_service.hpp",
+      "sha256": "1c74a7cfba92eb6c1ae9932b598458af341b0304d2b5c81b4d57050d015e51a5"
+    },
+    {
+      "path": "implementation/frozen/C3-gemma/src/memory/plan_service_bridge.cpp",
+      "sha256": "c77f3f5a6fcd6b038592939da1dbc0e25e8e573fcc0acd1588a7066ec88c5f58"
+    },
+    {
+      "path": "implementation/frozen/C3-gemma/src/memory/plan_service_bundle.hpp",
+      "sha256": "2ebd9563a51fe5bb9db4bb2bc5ee0735061a7ccb3899715c67c1f93f2bed02fa"
+    },
+    {
+      "path": "implementation/frozen/C3-gemma/src/memory/plan_v0.hpp",
+      "sha256": "131c5d0036e0e7ea5f9bb6c8c9d60d5767ebb4472ffc4b3817213cf75e981639"
+    },
+    {
+      "path": "implementation/frozen/C3-gemma/tools/observe_qwen3_next_plan_consumer.py",
+      "sha256": "76ffc0f0ca62edba523721505ab9025d655a508c78ee7ccb9f4b87a8c832b45e"
+    },
+    {
+      "path": "implementation/frozen/C3-gemma/tools/run_qwen3_next_bounded_cell.sh",
+      "sha256": "b7973f298aa8ef36c8c966b9ed0f7128ef6531f038c6783ac82a1ca70b1c1032"
+    },
+    {
+      "path": "implementation/frozen/C3-gemma/tools/validate_gemma4_fault_transfer_cell.py",
+      "sha256": "a9edcd16358365e302d68298d92381a4e4f9ab08c04145840bc59359eec5c247"
+    },
+    {
+      "path": "implementation/frozen/C3-qwen/configs/qwen3-next-integrated-fault-campaign.json",
+      "sha256": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276"
+    },
+    {
+      "path": "implementation/frozen/C3-qwen/src/adapters/qwen3_next_plan_runtime_adapter.cpp",
+      "sha256": "029ed3af631d12d845455249cc4738ab3944b4f6eb2809389859bc771e3c9150"
+    },
+    {
+      "path": "implementation/frozen/C3-qwen/src/memory/bounded_source_service.hpp",
+      "sha256": "1c74a7cfba92eb6c1ae9932b598458af341b0304d2b5c81b4d57050d015e51a5"
+    },
+    {
+      "path": "implementation/frozen/C3-qwen/src/memory/plan_service_bridge.cpp",
+      "sha256": "c77f3f5a6fcd6b038592939da1dbc0e25e8e573fcc0acd1588a7066ec88c5f58"
+    },
+    {
+      "path": "implementation/frozen/C3-qwen/src/memory/plan_service_bundle.hpp",
+      "sha256": "2ebd9563a51fe5bb9db4bb2bc5ee0735061a7ccb3899715c67c1f93f2bed02fa"
+    },
+    {
+      "path": "implementation/frozen/C3-qwen/src/memory/plan_v0.hpp",
+      "sha256": "131c5d0036e0e7ea5f9bb6c8c9d60d5767ebb4472ffc4b3817213cf75e981639"
+    },
+    {
+      "path": "implementation/frozen/C3-qwen/tools/observe_qwen3_next_plan_consumer.py",
+      "sha256": "76ffc0f0ca62edba523721505ab9025d655a508c78ee7ccb9f4b87a8c832b45e"
+    },
+    {
+      "path": "implementation/frozen/C3-qwen/tools/run_qwen3_next_bounded_cell.sh",
+      "sha256": "b7973f298aa8ef36c8c966b9ed0f7128ef6531f038c6783ac82a1ca70b1c1032"
+    },
+    {
+      "path": "implementation/frozen/C3-qwen/tools/validate_qwen3_next_fault_cell.py",
+      "sha256": "07500dc96ac535bfcfa1684ee654d1519c53b22ae65d29bf0046ddb7ba69c677"
+    }
+  ]
+}
+

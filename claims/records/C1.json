@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "claim_id": "C1",
+  "title": "Output-exact execution beyond full residency",
+  "evidence_cutoff": "2026-08-21",
+  "workload": {
+    "model": "Qwen3-Next Q4_K_M",
+    "prompt_tokens": 32768,
+    "generated_outputs": 64,
+    "cache_policy": "per-layer LRU64",
+    "oracle_policy": "zero-cache"
+  },
+  "representation_and_demand": {
+    "canonical_tensor_payload_bytes": 48405005312,
+    "semantic_demand_lower_bound_bytes": 46808432640,
+    "semantic_demand_object_count": 24576,
+    "duplicate_component_intervals": 0,
+    "overlapping_component_intervals": 0,
+    "semantic_extent_union_sha256": "bad5b23f5ac0b936fa3a4268c357a5cdaf15bf2d451045095e5a45f68ecee5e1",
+    "all_managed_experts_demanded_in_every_prefill_layer_event": true
+  },
+  "resource_contract": {
+    "complete_host_cgroup_max_bytes": 11811160064,
+    "declared_whole_board_gpu_budget_bytes": 24696061952,
+    "physical_board_bytes": 25769803776,
+    "declared_aggregate_budget_bytes": 36507222016,
+    "payload_excess_over_declared_aggregate_bytes": 11897783296,
+    "semantic_demand_excess_over_declared_aggregate_bytes": 10301210624,
+    "semantic_demand_excess_over_host_hard_plus_physical_board_bytes": 9227468800,
+    "gpu_authority": "whole-board observation against the declared budget; not hard partitioning"
+  },
+  "exactness": {
+    "oracle_comparators": 1,
+    "reruns": 0,
+    "token_ids_equal": true,
+    "complete_logit_rows_equal": true,
+    "complete_logit_rows": 64,
+    "float32_values_per_row": 151936,
+    "bytes_per_row": 607744,
+    "bytes_per_arm": 38895616,
+    "complete_logits_sha256": "04a4feb81f6274c47d720131f94f18f70439d8e434451750fcac17a493306e66",
+    "ordered_route_events_equal": true,
+    "route_events_per_arm": 3408,
+    "response_bytes_equal": true,
+    "consumer_identity_equal": true,
+    "consumer_identity_fields": 7,
+    "consumer_identity_sha256": "f5ae6bc54adde32e436041c56eca24edea13f466119a1c4fd22f14af70165754",
+    "model_memory_destination_identity_equal": true,
+    "model_memory_destination_entries": 2,
+    "model_memory_destination_identity_sha256": "e23ab31279328a3782e728e257aa7ccc382df7275f88c2e7bc787d4fe2a7f3cc",
+    "identity_digest_canonicalization": "UTF-8 JSON with recursively sorted object keys, compact separators, and no trailing newline",
+    "recurrent_state_bytes": "unavailable_not_claimed"
+  },
+  "source_path_canary": {
+    "prompt_tokens": 256,
+    "generated_outputs": 8,
+    "cache_state": "zero-cache in both arms",
+    "candidate_source": "eight-window bounded O_DIRECT",
+    "control_source": "synchronous source",
+    "complete_logit_rows_equal": true,
+    "token_ids_equal": true,
+    "response_bytes_equal": true,
+    "ordered_route_events_equal": true,
+    "route_events_per_arm": 384,
+    "consumer_identity_equal": true,
+    "model_memory_destination_identity_equal": true,
+    "prefill_layer_events": 48,
+    "experts_per_prefill_layer_event": 512,
+    "managed_layer_expert_objects_covered": 24576,
+    "lifecycle_closed": true,
+    "scope_note": "Separate eight-output source-path equality result; not pooled with the 64-output cache-policy oracle."
+  },
+  "resources": {
+    "candidate_complete_cgroup_peak_bytes": 1496981504,
+    "candidate_whole_board_peak_bytes": 13218807808,
+    "oracle_complete_cgroup_peak_bytes": 2910679040,
+    "oracle_whole_board_peak_bytes": 6973292544,
+    "swap_peak_bytes": 0,
+    "memory_event_deltas": 0,
+    "foreign_gpu_processes": 0
+  },
+  "provenance": {
+    "result_record_sha256": "e06f7257b8e9d448b700146f6c912277f4c37c33e0202a53ace11a6ffffde05a",
+    "demand_analysis_sha256": "cf9570e834cab551475982ae10c58dbe4e3176ba36ef41e68904af4f75b9022a",
+    "semantic_demand_audit": "evidence/replay/C1/semantic-demand-audit.json",
+    "compact_exactness_certificate": "evidence/replay/C1/certificate.json"
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "decision_id": "gemma4-integrated-fault-transfer",
+  "classification": "decision-bearing",
+  "status": "FROZEN_FOR_EXECUTION",
+  "decision_consumer": "decide whether the Qwen3-Next deterministic fail-closed result transfers through a second real model adapter strongly enough for the paper to claim tested cross-adapter ownership enforcement",
+  "objective": "Execute one real-GPU Gemma 4 no-fault control plus short-read, stale-generation, and held-consumer representatives through the same Plan and bounded-source core, preserving fatal no-publication behavior and control-exact recoverable behavior.",
+  "claim_boundary": "One RTX 3090, one official Gemma 4 26B Q4_0 artifact, one 42-token formatted natural prompt, eight greedy outputs, zero cache, eight O_DIRECT source windows, one binary, and exactly four deterministic modes. Together with the frozen ten-cell Qwen campaign this can support tested cross-adapter fail-closed behavior for named transitions; it cannot establish race freedom, serving isolation, general fault tolerance, or performance causality.",
+  "predecessor": {
+    "decision_id": "qwen3-next-integrated-fault-campaign",
+    "config_path": "configs/qwen3-next-integrated-fault-campaign.json",
+    "config_sha256": "3cc4dc949c0d13ad1843255a398a6fdbb262d57345f91ee6fef801639acd8276",
+    "qualification_job": "memory-sovereign-inference/20260820T100540Z-qwen3-next-integrated-fault-qualification-r2-e5889422",
+    "qualification_identity_digest": "edb25428e33144f3c3b7cf1bfc698b2adfeb9ed00f3924cd4920341f9555d225",
+    "raw_root": "/data/ai/runs/memory-sovereign-inference/20260820T-qwen3-next-integrated-fault-campaign/cells",
+    "terminal_state": "all ten ordered cells VALID"
+  },
+  "model": {
+    "path": "/data/ai/runs/memory-sovereign-inference/20260818T-stage5-gemma4-target-acquisition/asset/gemma-4-26B_q4_0-it.gguf",
+    "sha256": "3eca3b8f6d7baf218a7dd6bba5fb59a56ee25fe2d567b6f5f589b4f697eca51d",
+    "bytes": 14439363584
+  },
+  "runtime_identity": {
+    "private_worktree": "/home/krooksn/ai/runtimes/memory-sovereign-inference-llama-cpp-gemma4-binding",
+    "base_commit": "40d5358d3c730b81729ba81cd5c44ed596d02510",
+    "adapter_commit": "05f332a0b031aa18041622e26f37e6a7c1fe82f0",
+    "backend_dir": "/home/krooksn/ai/runtimes/memory-sovereign-inference-llama-cpp-gemma4-binding/build-msi-phase3/bin",
+    "graph": "stock_gemma4_llama_decode"
+  },
+  "implementation": {
+    "binary_path": "/data/ai/runs/memory-sovereign-inference/20260820T-gemma4-fault-transfer-development/bin/gemma4-fault-adapter",
+    "binary_sha256": "a01ea93148235539bd0cb5c7374e189e94364f19c4fc21fe8559a2e97420f371",
+    "adapter_path": "src/adapters/gemma4_plan_runtime_adapter.cpp",
+    "adapter_sha256": "88570b5db5a771ca89fcadcc7746039b7760c113f32636c2648b2361f9141fc4",
+    "plan_path": "src/memory/plan_v0.hpp",
+    "plan_sha256": "131c5d0036e0e7ea5f9bb6c8c9d60d5767ebb4472ffc4b3817213cf75e981639",
+    "bounded_source_path": "src/memory/bounded_source_service.hpp",
+    "bounded_source_sha256": "1c74a7cfba92eb6c1ae9932b598458af341b0304d2b5c81b4d57050d015e51a5",
+    "validator_path": "tools/validate_gemma4_fault_transfer_cell.py",
+    "validator_sha256": "a9edcd16358365e302d68298d92381a4e4f9ab08c04145840bc59359eec5c247",
+    "observer_path": "tools/observe_qwen3_next_plan_consumer.py",
+    "observer_sha256": "76ffc0f0ca62edba523721505ab9025d655a508c78ee7ccb9f4b87a8c832b45e",
+    "launcher_path": "tools/run_qwen3_next_bounded_cell.sh",
+    "launcher_sha256": "b7973f298aa8ef36c8c966b9ed0f7128ef6531f038c6783ac82a1ca70b1c1032"
+  },
+  "hardware": {
+    "gpu_product": "NVIDIA GeForce RTX 3090",
+    "gpu_uuid": "GPU-38bca229-3688-c0be-cbdc-c24bfedbddce",
+    "physical_board_bytes": 25769803776,
+    "gpu_board_budget_bytes": 24696061952,
+    "host_cgroup_max_bytes": 8589934592,
+    "host_cgroup_swap_max_bytes": 0,
+    "minimum_margin_bytes": 536870912,
+    "required_foreign_compute_pids": []
+  },
+  "workload": {
+    "prompt": "A box contains five red, three blue, and two green balls. What is the probability of drawing a blue ball? Give the simplified fraction.",
+    "prompt_formatter": "official Gemma 4 one-user, no-tools, thinking-disabled expansion",
+    "formatted_prompt_tokens": 42,
+    "output_tokens": 8,
+    "cache_capacity": 0,
+    "source_in_flight": 8,
+    "sampling": "greedy for eight outputs"
+  },
+  "ordered_cells": [
+    "none",
+    "short_read",
+    "stale_completion",
+    "held_consumer"
+  ],
+  "faults": {
+    "none": "ordinary eight-window asynchronous control; eight outputs and all ledgers must close",
+    "short_read": "the first graph-demanded source operation returns one byte short with a nonnegative completion; no Plan ready state or H2D may publish",
+    "stale_completion": "after a window is recycled and reassigned, its earlier Plan window generation completes late; it must reject before H2D",
+    "held_consumer": "window recycle is attempted with a live real graph consumer; it must reject, then succeed after ordinary consumer completion and remain control-exact"
+  },
+  "fatal_faults": [
+    "short_read",
+    "stale_completion"
+  ],
+  "recoverable_faults": [
+    "held_consumer"
+  ],
+  "interpretation_rule": "A fatal cell passes only with the declared rejection, zero accepted tokens/logits, no invalid readiness or H2D publication, one explicitly accounted Plan fault window, and a fully drained source executor. The held-consumer cell passes only with a live-consumer rejection, bit-exact logits, exact tokens/routes/materializations against control, clean resources, and complete lifecycle closure.",
+  "repetition_rule": "One deterministic cell per declared mode. No outcome-selected repetition; a system-fault rerun requires a documented repair, exact host preflight, and a new identity.",
+  "success_condition": "All four Gemma cells are evidence-valid and the predecessor's ten Qwen cells remain valid. This supports only the declared tested cross-adapter fail-closed wording.",
+  "stopping_condition": "Stop the essential paper program after certification if all fourteen total cells are valid. Defer Qwen3.6 MTP and the full Gemma performance population because the attached execution sequence classifies them as nonessential and the Northstar component/performance plus cross-adapter fault result is already positive."
+}

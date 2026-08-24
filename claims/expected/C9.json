@@ -1,0 +1,7 @@
+{"claim":"C9","assertions":[
+  {"json_pointer":"/population/qwen3_next_correct","op":"eq","value":5},
+  {"json_pointer":"/population/resident_qwen36_correct","op":"eq","value":5},
+  {"json_pointer":"/timing/total_process_ratio","op":"approx","value":4.965096742782696},
+  {"json_pointer":"/timing/time_to_first_useful_action_ratio","op":"approx","value":14.126348034757331},
+  {"json_pointer":"/observations","op":"len","value":5}
+]}
