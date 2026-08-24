@@ -80,6 +80,12 @@
     "foreign_gpu_processes": 0
   },
   "provenance": {
+    "project_commit": "70bc7203d92b74e48aa01dbd5700f24ef06ff301",
+    "model_sha256": "d103b2733ec1012a52d01edda66b7e5c24ae50508c9f99f5297ea459ef3c061a",
+    "adapter_source": "implementation/frozen/C1/src/adapters/qwen3_next_plan_runtime_adapter.cpp",
+    "adapter_source_sha256": "ca637a7c84e336862273f98e2334529df1082fee97f4e0f5f6bf2ea1893e5bdb",
+    "experiment_contract": "implementation/frozen/C1-contract/configs/qwen3-next-full64-oracle-confirmation.json",
+    "experiment_contract_sha256": "738eabf5b23f9c63a3c68032c765b08ee4721357cf7eb640c91a388d37d6e87a",
     "result_record_sha256": "e06f7257b8e9d448b700146f6c912277f4c37c33e0202a53ace11a6ffffde05a",
     "demand_analysis_sha256": "cf9570e834cab551475982ae10c58dbe4e3176ba36ef41e68904af4f75b9022a",
     "semantic_demand_audit": "evidence/replay/C1/semantic-demand-audit.json",

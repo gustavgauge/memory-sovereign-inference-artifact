@@ -1,7 +1,22 @@
 {"claim":"C2","assertions":[
   {"json_pointer":"/workload/pairs","op":"eq","value":6},
+  {"json_pointer":"/workload/execution_order","op":"eq","value":["P","D1","F1","D2","F2","D3","F3","D4","F4","D5","F5","D6","F6"]},
+  {"json_pointer":"/admission/P_resource_admissible","op":"eq","value":false},
+  {"json_pointer":"/admission/P_complete_cgroup_peak_bytes","op":"eq","value":11811160064},
+  {"json_pointer":"/admission/P_memory_max_events","op":"eq","value":33481},
   {"json_pointer":"/admission/D_and_F_all_oracle_exact","op":"eq","value":true},
   {"json_pointer":"/admission/D_and_F_all_resource_admissible","op":"eq","value":true},
+  {"json_pointer":"/admission/F_all_lifecycle_admissible","op":"eq","value":true},
   {"json_pointer":"/paired_result/geometric_F_over_D_wall_ratio","op":"approx","value":0.32291333601697325},
-  {"json_pointer":"/paired_result/physical_source_bytes_per_decode_output_F","op":"approx","value":97667442.8976378}
+  {"json_pointer":"/paired_result/paired_log_95_interval","op":"eq","value":[0.3200896627610479,0.3257619183267789]},
+  {"json_pointer":"/paired_result/reciprocal_D_over_F","op":"approx","value":3.0968061348430562},
+  {"json_pointer":"/paired_result/physical_source_bytes_per_decode_output_D","op":"approx","value":97667442.8976378},
+  {"json_pointer":"/paired_result/physical_source_bytes_per_decode_output_F","op":"approx","value":97667442.8976378},
+  {"json_pointer":"/lifecycle/F_submissions","op":"eq","value":333120},
+  {"json_pointer":"/lifecycle/F_completions","op":"eq","value":333120},
+  {"json_pointer":"/lifecycle/F_peak_in_flight","op":"eq","value":8},
+  {"json_pointer":"/lifecycle/F_dynamic_direct_allocations","op":"eq","value":0},
+  {"json_pointer":"/lifecycle/F_free_windows_at_every_close","op":"eq","value":8},
+  {"source":"evidence/replay/C2/campaign-evaluation.json","json_pointer":"/derived/paired_estimands/decode_physical_source_bytes_per_output/D_values","op":"eq","value":[97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378]},
+  {"source":"evidence/replay/C2/campaign-evaluation.json","json_pointer":"/derived/paired_estimands/decode_physical_source_bytes_per_output/F_values","op":"eq","value":[97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378,97667442.8976378]}
 ]}

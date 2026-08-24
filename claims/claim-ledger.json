@@ -3,6 +3,8 @@
   "artifact": "memory_sovereign_inference_claim_ledger",
   "evidence_cutoff": "2026-08-21",
   "repository_url": "https://github.com/gustavgauge/memory-sovereign-inference-artifact",
+  "release_tag": "v0.1.0",
+  "release_url": "https://github.com/gustavgauge/memory-sovereign-inference-artifact/releases/tag/v0.1.0",
   "scope": "Each entry binds one paper claim to a publication-facing record, content digest, machine-readable assertions, and an offline replay command.",
   "query_template": "./artifact verify --claim CLAIM_ID",
   "replay_template": "./artifact replay --claim CLAIM_ID",
@@ -16,10 +18,14 @@
       "headline": "Output-exact execution beyond full residency",
       "certificate_scope": "W / H=cgroup-charge hard / G=audit+physical / E[E_64-out,64] / L=clean no-fault closure",
       "paper_claim": "At one Qwen3-Next 32K+64 identity, the complete representation and the semantic-demand lower bound exceed the declared aggregate budget; the execution remains resource-admissible and matches one zero-cache oracle across all 64 complete logit rows, token IDs, response bytes, recorded routes, the seven-field consumer identity, and the two-entry destination identity.",
-      "source": {"path": "claims/records/C1.json", "sha256": "8dd54068ed47aca7126a30334fbfe444d474350a82f2f439da77eb3e30d156e0"},
+      "source": {"path": "claims/records/C1.json", "sha256": "af894187b75463f643ece73ea937e5b86c19a68c2a41619c8224918ec8f06201"},
       "supporting_sources": [
         {"path": "evidence/replay/C1/certificate.json", "sha256": "e579492219b3bd84c94d69052b8859b36b476da4721c5c3ccfebc2df133dbae9", "json_pointers": ["/checks/all64_logit_rows_byte_exact", "/checks/consumer_exact", "/checks/destination_exact"]},
-        {"path": "evidence/replay/C1/semantic-demand-audit.json", "sha256": "11f4fa2da2915c0f6071518447947b7ee448a90f5f2b63df8dec509bdfa0fabc", "json_pointers": ["/canonical_extent_union/union_bytes", "/canonical_extent_union/union_sha256", "/envelope_comparisons/declared_contract/semantic_demand_excess_bytes"]}
+        {"path": "evidence/replay/C1/semantic-demand-audit.json", "sha256": "c70fc964a54e34b042191fce974a29b11c0c4e8f23135b797fa37afee52ca757", "json_pointers": ["/input_identities/adapter_sha256", "/canonical_extent_union/union_bytes", "/canonical_extent_union/union_sha256", "/envelope_comparisons/declared_contract/semantic_demand_excess_bytes"]},
+        {"path": "implementation/frozen/C1-contract/configs/qwen3-next-full64-oracle-confirmation.json", "sha256": "738eabf5b23f9c63a3c68032c765b08ee4721357cf7eb640c91a388d37d6e87a", "json_pointers": ["/model/sha256", "/runtime/historical_project_commit", "/runtime/historical_sources/0/sha256"]},
+        {"path": "implementation/frozen/C1/src/adapters/qwen3_next_plan_runtime_adapter.cpp", "sha256": "ca637a7c84e336862273f98e2334529df1082fee97f4e0f5f6bf2ea1893e5bdb"},
+        {"path": "implementation/source-manifest.json", "sha256": "b8e9c3e7f6736c4f2747422f8c13a12a0915a2884b4a1e63019547a915cc1a69", "json_pointers": ["/files/4/path", "/files/4/sha256"]},
+        {"path": "environment/models.json", "sha256": "fed3669832079b4e2a33252ce58aae51a99a81347e3db2db1bfe3d91af68198a", "json_pointers": ["/models/0/sha256"]}
       ],
       "expected_assertions": "claims/expected/C1.json",
       "capsule_command": "./artifact verify --claim C1",

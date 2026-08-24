@@ -173,6 +173,11 @@ def replay_c1() -> dict[str, Any]:
     record = load_json(ROOT / "claims/records/C1.json")
     certificate = load_json(ROOT / "evidence/replay/C1/certificate.json")
     audit = load_json(ROOT / "evidence/replay/C1/semantic-demand-audit.json")
+    contract_path = ROOT / record["provenance"]["experiment_contract"]
+    adapter_path = ROOT / record["provenance"]["adapter_source"]
+    contract = load_json(contract_path)
+    source_manifest = load_json(SOURCE_MANIFEST)
+    models = load_json(ROOT / "environment/models.json")
     exactness = certificate["exactness"]
     required_checks = (
         "all64_tokens_exact",
@@ -182,7 +187,13 @@ def replay_c1() -> dict[str, Any]:
         "response_exact",
         "consumer_exact",
         "destination_exact",
+        "candidate_resource_contract",
+        "oracle_resource_contract",
+        "candidate_lifecycle_closed",
+        "oracle_lifecycle_closed",
     )
+    if certificate.get("valid") is not True:
+        raise ArtifactError("C1: certificate is not valid")
     failed_checks = [name for name in required_checks if certificate["checks"].get(name) is not True]
     if failed_checks:
         raise ArtifactError(f"C1: exactness checks failed: {failed_checks!r}")
@@ -190,7 +201,56 @@ def replay_c1() -> dict[str, Any]:
         raise ArtifactError("C1: candidate and oracle row digests differ")
     if exactness["candidate_logits_sha256"] != exactness["oracle_logits_sha256"]:
         raise ArtifactError("C1: complete logits digests differ")
-    contract = record["resource_contract"]
+
+    provenance = record["provenance"]
+    audit_identities = audit["input_identities"]
+    contract_adapter = next(
+        item for item in contract["runtime"]["historical_sources"]
+        if item["path"].endswith("src/adapters/qwen3_next_plan_runtime_adapter.cpp")
+    )
+    source_digests = {item["path"]: item["sha256"] for item in source_manifest["files"]}
+    qwen_model = next(item for item in models["models"] if item["role"] == "C1-C3 Qwen3-Next")
+    identity_checks = {
+        "contract_digest": provenance["experiment_contract_sha256"] == sha256(contract_path),
+        "adapter_digest": provenance["adapter_source_sha256"] == sha256(adapter_path),
+        "source_manifest_adapter": source_digests.get(provenance["adapter_source"]) == provenance["adapter_source_sha256"],
+        "audit_adapter": audit_identities["adapter_sha256"] == provenance["adapter_source_sha256"],
+        "contract_adapter": contract_adapter["sha256"] == provenance["adapter_source_sha256"],
+        "audit_model": audit_identities["model_sha256"] == provenance["model_sha256"],
+        "contract_model": contract["model"]["sha256"] == provenance["model_sha256"],
+        "acquisition_model": qwen_model["sha256"] == provenance["model_sha256"],
+        "audit_project": audit_identities["project_commit"] == provenance["project_commit"],
+        "contract_project": contract["runtime"]["historical_project_commit"] == provenance["project_commit"],
+        "candidate_result": audit_identities["product_result_sha256"] == contract["candidate_product_cell"]["result"]["sha256"],
+        "terminal_result": audit_identities["terminal_result_sha256"] == provenance["result_record_sha256"],
+        "full64_certificate": audit_identities["full64_certificate_sha256"] == certificate["source_certificate_sha256"],
+    }
+    failed_identities = [name for name, passed in identity_checks.items() if not passed]
+    if failed_identities:
+        raise ArtifactError(f"C1: provenance identity mismatch: {failed_identities!r}")
+
+    resources = certificate["resource_observations"]
+    hardware = contract["hardware"]
+    resource_identity_checks = {
+        "host_cap": resources["host_cgroup_max_bytes"] == hardware["host_cgroup_max_bytes"],
+        "gpu_budget": resources["declared_whole_board_gpu_budget_bytes"] == hardware["gpu_board_budget_bytes"],
+        "physical_board": resources["physical_board_bytes"] == hardware["physical_board_bytes"],
+    }
+    if not all(resource_identity_checks.values()):
+        raise ArtifactError("C1: resource authority identity mismatch")
+    for arm in ("candidate", "oracle"):
+        if resources[f"{arm}_complete_cgroup_peak_bytes"] > hardware["host_cgroup_max_bytes"] - hardware["minimum_host_margin_bytes"]:
+            raise ArtifactError(f"C1: {arm} host margin predicate failed")
+        if resources[f"{arm}_whole_board_peak_bytes"] > hardware["gpu_board_budget_bytes"] - hardware["minimum_gpu_margin_bytes"]:
+            raise ArtifactError(f"C1: {arm} GPU margin predicate failed")
+        if resources[f"{arm}_swap_peak_bytes"] != 0:
+            raise ArtifactError(f"C1: {arm} swap predicate failed")
+        if any(resources[f"{arm}_memory_event_deltas"].values()):
+            raise ArtifactError(f"C1: {arm} memory-event predicate failed")
+        if resources[f"{arm}_foreign_compute_processes"] != 0:
+            raise ArtifactError(f"C1: {arm} foreign-compute predicate failed")
+
+    resource_contract = record["resource_contract"]
     demand = record["representation_and_demand"]
     route = audit["route_coverage"]
     extents = audit["canonical_extent_union"]
@@ -204,8 +264,14 @@ def replay_c1() -> dict[str, Any]:
     )
     if union_bytes != extents["union_bytes"]:
         raise ArtifactError("C1: semantic extent union does not reproduce")
+    if extents["duplicate_component_intervals"] != 0 or extents["overlapping_component_intervals"] != 0:
+        raise ArtifactError("C1: semantic extent union is not duplicate-free and overlap-free")
     if extents["canonical_component_intervals"] != route["managed_layer_expert_objects"] * len(extents["components_per_object"]):
         raise ArtifactError("C1: canonical interval count does not reproduce")
+    if union_bytes != demand["semantic_demand_lower_bound_bytes"] or extents["union_sha256"] != demand["semantic_extent_union_sha256"]:
+        raise ArtifactError("C1: semantic-demand record differs from the audited union")
+    if audit["representation_inventory"]["canonical_tensor_payload_bytes"] != demand["canonical_tensor_payload_bytes"]:
+        raise ArtifactError("C1: representation inventory differs from the audited payload")
     declared = audit["envelope_comparisons"]["declared_contract"]
     if declared["host_cgroup_max_bytes"] + declared["declared_whole_board_gpu_budget_bytes"] != declared["aggregate_bytes"]:
         raise ArtifactError("C1: declared aggregate envelope does not reproduce")
@@ -214,8 +280,8 @@ def replay_c1() -> dict[str, Any]:
     result = {
         "rows": len(exactness["candidate_row_sha256"]),
         "bytes_per_row": exactness["bytes_per_row"],
-        "payload_excess_bytes": contract["payload_excess_over_declared_aggregate_bytes"],
-        "semantic_union_excess_bytes": contract["semantic_demand_excess_over_declared_aggregate_bytes"],
+        "payload_excess_bytes": resource_contract["payload_excess_over_declared_aggregate_bytes"],
+        "semantic_union_excess_bytes": resource_contract["semantic_demand_excess_over_declared_aggregate_bytes"],
         "semantic_union_sha256": demand["semantic_extent_union_sha256"],
         "semantic_objects": route["managed_layer_expert_objects"],
         "semantic_intervals": extents["canonical_component_intervals"],
@@ -225,6 +291,11 @@ def replay_c1() -> dict[str, Any]:
         "destination_identity_sha256": record["exactness"]["model_memory_destination_identity_sha256"],
         "source_path_canary_outputs": record["source_path_canary"]["generated_outputs"],
         "source_path_canary_objects": record["source_path_canary"]["managed_layer_expert_objects_covered"],
+        "identity_chain": all(identity_checks.values()),
+        "candidate_host_margin_bytes": hardware["host_cgroup_max_bytes"] - resources["candidate_complete_cgroup_peak_bytes"],
+        "candidate_gpu_margin_bytes": hardware["gpu_board_budget_bytes"] - resources["candidate_whole_board_peak_bytes"],
+        "resource_contracts": certificate["checks"]["candidate_resource_contract"] and certificate["checks"]["oracle_resource_contract"],
+        "lifecycle_closures": certificate["checks"]["candidate_lifecycle_closed"] and certificate["checks"]["oracle_lifecycle_closed"],
     }
     expected = {
         "rows": 64,
@@ -240,6 +311,11 @@ def replay_c1() -> dict[str, Any]:
         "destination_identity_sha256": "e23ab31279328a3782e728e257aa7ccc382df7275f88c2e7bc787d4fe2a7f3cc",
         "source_path_canary_outputs": 8,
         "source_path_canary_objects": 24576,
+        "identity_chain": True,
+        "candidate_host_margin_bytes": 10314178560,
+        "candidate_gpu_margin_bytes": 11477254144,
+        "resource_contracts": True,
+        "lifecycle_closures": True,
     }
     if result != expected:
         raise ArtifactError(f"C1 replay mismatch: {result!r}")
@@ -247,17 +323,67 @@ def replay_c1() -> dict[str, Any]:
 
 
 def replay_c2() -> dict[str, Any]:
+    record = load_json(ROOT / "claims/records/C2.json")
     raw = load_json(ROOT / "evidence/replay/C2/campaign-evaluation.json")
+    if raw["execution_order"] != record["workload"]["execution_order"]:
+        raise ArtifactError("C2: execution order differs between record and replay operands")
+    if raw["arm_definitions"] != record["arms"]:
+        raise ArtifactError("C2: arm definitions differ between record and replay operands")
     estimand = raw["derived"]["paired_estimands"]["complete_request_wall_seconds"]
     ratio, lower, upper = geometric_ratio_interval(estimand["D_values"], estimand["F_values"])
     if not all(close(a, b) for a, b in zip((ratio, lower, upper), (estimand["geometric_mean_ratio"], *estimand["student_t_95_interval"]))):
         raise ArtifactError("C2: paired-log result does not reproduce")
+    paired_result = record["paired_result"]
+    if not all(close(a, b) for a, b in zip(
+        (ratio, lower, upper, 1.0 / ratio),
+        (paired_result["geometric_F_over_D_wall_ratio"], *paired_result["paired_log_95_interval"], paired_result["reciprocal_D_over_F"]),
+    )):
+        raise ArtifactError("C2: paired result differs from the claim record")
+
+    byte_estimand = raw["derived"]["paired_estimands"]["decode_physical_source_bytes_per_output"]
+    if any(not close(d_value, f_value) for d_value, f_value in zip(byte_estimand["D_values"], byte_estimand["F_values"])):
+        raise ArtifactError("C2: D and F physical source bytes differ")
+    if not close(byte_estimand["D_arithmetic_mean"], paired_result["physical_source_bytes_per_decode_output_D"]):
+        raise ArtifactError("C2: D physical-byte mean differs from the claim record")
+    if not close(byte_estimand["F_arithmetic_mean"], paired_result["physical_source_bytes_per_decode_output_F"]):
+        raise ArtifactError("C2: F physical-byte mean differs from the claim record")
+
+    expected_admission = {
+        "P_resource_admissible": False,
+        "P_complete_cgroup_peak_bytes": 11811160064,
+        "P_memory_max_events": 33481,
+        "D_and_F_all_oracle_exact": True,
+        "D_and_F_all_resource_admissible": True,
+        "F_all_lifecycle_admissible": True,
+    }
+    if record["admission"] != expected_admission:
+        raise ArtifactError("C2: admission predicates differ from the frozen claim")
+    expected_lifecycle = {
+        "F_submissions": 333120,
+        "F_completions": 333120,
+        "F_peak_in_flight": 8,
+        "F_dynamic_direct_allocations": 0,
+        "F_free_windows_at_every_close": 8,
+    }
+    if record["lifecycle"] != expected_lifecycle:
+        raise ArtifactError("C2: lifecycle predicates differ from the frozen claim")
+    if record["lifecycle"]["F_submissions"] != record["lifecycle"]["F_completions"]:
+        raise ArtifactError("C2: F operation balance failed")
     return {
-        "execution_order": "P, D1, F1, D2, F2, D3, F3, D4, F4, D5, F5, D6, F6",
+        "execution_order": ", ".join(raw["execution_order"]),
         "paired_F_over_D": [f / d for d, f in zip(estimand["D_values"], estimand["F_values"])],
         "geometric_F_over_D": ratio,
         "interval_95": [lower, upper],
         "reciprocal": 1.0 / ratio,
+        "physical_source_bytes_equal": True,
+        "P_resource_admissible": record["admission"]["P_resource_admissible"],
+        "P_memory_max_events": record["admission"]["P_memory_max_events"],
+        "D_and_F_all_oracle_exact": record["admission"]["D_and_F_all_oracle_exact"],
+        "D_and_F_all_resource_admissible": record["admission"]["D_and_F_all_resource_admissible"],
+        "F_all_lifecycle_admissible": record["admission"]["F_all_lifecycle_admissible"],
+        "F_operation_balance": record["lifecycle"]["F_submissions"] == record["lifecycle"]["F_completions"],
+        "F_dynamic_direct_allocations": record["lifecycle"]["F_dynamic_direct_allocations"],
+        "F_free_windows_at_every_close": record["lifecycle"]["F_free_windows_at_every_close"],
     }
 
 

@@ -67,8 +67,8 @@ govern acquisition and use.
 ## Packaged evidence boundary
 
 Compact evidence and all paper-critical replay operands are stored directly in
-this repository. Bulk logs, model weights, and complete output binaries are
-not redistributed. Their omission does not leave a headline number dependent
-on an unavailable archive: the capsule contains the decisive observations,
-content digests, validators, and claim-to-source bindings needed for offline
-audit and arithmetic replay.
+this repository. Verification checks packaged record identities and enumerated
+assertions; replay recomputes arithmetic and categorical summaries from compact
+publication operands. Bulk logs, model weights, and complete output binaries
+are not redistributed. Their digests preserve the recorded object identities,
+but the artifact does not rederive every certificate from raw execution output.

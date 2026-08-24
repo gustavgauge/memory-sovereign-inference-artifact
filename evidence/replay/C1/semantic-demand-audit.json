@@ -7,7 +7,7 @@
     "full64_certificate_sha256": "ca3d3a23f29f43785f300c2f4de56dd693805ed6444b47cb76f65d2e75470420",
     "terminal_result_sha256": "e06f7257b8e9d448b700146f6c912277f4c37c33e0202a53ace11a6ffffde05a",
     "model_sha256": "d103b2733ec1012a52d01edda66b7e5c24ae50508c9f99f5297ea459ef3c061a",
-    "adapter_sha256": "ca6370662df7af450290773fe64984196b8c47a75dbdb061367721461d37aa06",
+    "adapter_sha256": "ca637a7c84e336862273f98e2334529df1082fee97f4e0f5f6bf2ea1893e5bdb",
     "project_commit": "70bc7203d92b74e48aa01dbd5700f24ef06ff301"
   },
   "definitions": {

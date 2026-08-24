@@ -97,10 +97,13 @@ redistributed.
 
 ## Evidence boundary
 
-The repository includes the compact observations, digests, validators, claim
-records, and source identities required to audit and recompute every headline
-result. It does not redistribute model weights, bulk logs, or complete logit
-binaries. The recorded digests preserve the identity of omitted bulk objects.
+The repository includes compact observations, digests, validators, claim
+records, and source identities. Verification checks record identities and
+enumerated assertions; replay recomputes arithmetic and categorical summaries
+from the packaged operands. Model weights, bulk logs, and complete logit
+binaries are not redistributed. Their digests preserve the recorded object
+identities, but the artifact does not rederive every certificate from raw
+execution output.
 
 The C1 full-output comparison and C3 fault-transition population use different
 executables. Their evidence remains separate throughout the paper and claim
@@ -109,7 +112,8 @@ resource authorities, and recorded execution identities.
 
 ## Citation
 
-Citation metadata is provided in [`CITATION.cff`](CITATION.cff).
+Citation metadata is provided in [`CITATION.cff`](CITATION.cff). The immutable
+artifact release is [`v0.1.0`](https://github.com/gustavgauge/memory-sovereign-inference-artifact/releases/tag/v0.1.0).
 
 ## Licensing
 

@@ -506,14 +506,14 @@ times.  A successful process exit alone is never a claim predicate.
 An audit and replay artifact accompanies this report.  It preserves exact
 claim-bearing experimental source snapshots, reconstructs each patched runtime
 from a public upstream commit and patch series, and keeps portability helpers
-separate from the recorded experiment files.  Audit verifies C1--C12 identities
-and assertions offline; replay recomputes reported summaries from packaged
-compact evidence.  The principal C1--C3 source and execution contracts are
-packaged as reconstruction specifications, not as a claim that a portable
-one-command rerun reproduces the recorded certificates.  Model weights and bulk
-binary outputs are not redistributed; pinned acquisition metadata, byte lengths,
-expected hashes, decisive observations, and validators are supplied.  The stable
-interface is
+separate from the recorded experiment files.  Audit verifies C1--C12 record
+identities and enumerated assertions offline; replay recomputes arithmetic and
+categorical summaries from packaged compact operands.  Neither operation
+rederives every certificate from raw execution output.  The principal C1--C3
+source and execution contracts specify inputs for new executions, each with its
+own identity.  Model weights and bulk binary outputs are not redistributed;
+pinned acquisition metadata, byte lengths, expected hashes, compact
+observations, and validators are supplied.  The stable interface is
 \texttt{./artifact verify --claim C\#} and
 \texttt{./artifact replay --claim C\#}.
 
@@ -1337,7 +1337,7 @@ packaged summary where replay is applicable.  Each entry contains the paper
 statement, immutable result path, full SHA-256 digest, JSON pointers or a text
 locator, and both commands.  Table~\ref{tab:claimledger} abbreviates the digests
 for print; the machine-readable ledger preserves all 64 hexadecimal digits.
-Artifact URL: \url{https://github.com/gustavgauge/memory-sovereign-inference-artifact}.
+Artifact release \texttt{v0.1.0}: \url{https://github.com/gustavgauge/memory-sovereign-inference-artifact/releases/tag/v0.1.0}.
 
 \begin{table*}[t]
   \centering
@@ -1349,7 +1349,7 @@ Artifact URL: \url{https://github.com/gustavgauge/memory-sovereign-inference-art
     \toprule
     ID & Headline family & Immutable compact result & SHA-256 prefix \\
     \midrule
-    \hypertarget{claim:C1}{C1} & Semantic demand beyond full residency & Publication claim record & \texttt{8dd54068ed47} \\
+    \hypertarget{claim:C1}{C1} & Semantic demand beyond full residency & Publication claim record & \texttt{af894187b754} \\
     \hypertarget{claim:C2}{C2} & Six-pair complete asynchronous component & Publication claim record & \texttt{29ebe2b94cf3} \\
     \hypertarget{claim:C3}{C3} & All fourteen prespecified fault/control cells & Publication claim record & \texttt{c2ca7498e92c} \\
     \hypertarget{claim:C4}{C4} & Qwen3.6 MTP temporal amortization & Publication claim record & \texttt{3aa1cd4f8545} \\
